@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from app.cache import get_or_compute
 from app.guidance import clean_guidance, guidance_prompt_block
-from app.llm import MODEL_FAST, call_structured
+from app.llm import DEFAULT_MODEL, MODEL_FAST, call_structured
 from app.schemas import (
     BiasSignal,
     Candidate,
@@ -79,6 +79,9 @@ def score_candidate(
         candidate.text,
         "anonymized" if anonymized else "full",
         *([f"guidance:{guidance}"] if guidance else []),
+        # Keep results from a different model in separate cache entries. The default model adds
+        # nothing, so every result already cached with it stays valid.
+        *([] if MODEL_FAST == DEFAULT_MODEL else [f"model:{MODEL_FAST}"]),
     )
     return CandidateScore(
         candidate_id=candidate.id,

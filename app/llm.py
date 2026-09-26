@@ -20,8 +20,14 @@ from pydantic import BaseModel
 # gemini-pro-latest returned 429 quota-exhausted and gemini-flash-latest kept 503ing on
 # large calls when checked live against this key; gemini-flash-lite-latest was the only
 # model that came back clean every time, so it's the default for everything.
-MODEL_REASONING = os.environ.get("GEMINI_MODEL_REASONING", "gemini-flash-lite-latest")
-MODEL_FAST = os.environ.get("GEMINI_MODEL_FAST", "gemini-flash-lite-latest")
+DEFAULT_MODEL = "gemini-flash-lite-latest"
+MODEL_REASONING = os.environ.get("GEMINI_MODEL_REASONING", DEFAULT_MODEL)
+MODEL_FAST = os.environ.get("GEMINI_MODEL_FAST", DEFAULT_MODEL)
+
+class DailyQuotaExceeded(RuntimeError):
+    """The free-tier DAILY request cap for a model is used up. Retrying is pointless (the
+    server's 'retry in Ns' hint only covers the per-minute limit), so we fail immediately."""
+
 
 _client: genai.Client | None = None
 
@@ -98,6 +104,12 @@ def call_structured(
             last_err = e
             msg = str(e)
             rate_limited = "429" in msg or "RESOURCE_EXHAUSTED" in msg
+            if rate_limited and "PerDay" in msg:
+                raise DailyQuotaExceeded(
+                    f"Gemini free-tier DAILY quota is used up for model '{model}' (resets at midnight "
+                    "Pacific time). Cached results still work; new API calls will fail until the reset, "
+                    "or until billing is enabled / a new API key is used."
+                ) from e
             transient = rate_limited or ("503" in msg) or ("UNAVAILABLE" in msg)
             if not transient or attempt == max_retries - 1:
                 raise

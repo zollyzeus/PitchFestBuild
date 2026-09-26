@@ -16,6 +16,7 @@ load_dotenv()
 
 from app.data_gen import DATASET_PATH, generate_dataset  # noqa: E402
 from app.ingest import SUPPORTED_EXTENSIONS, candidates_from_uploads  # noqa: E402
+from app.llm import DailyQuotaExceeded  # noqa: E402
 from app.guidance import MAX_CHARS as GUIDANCE_MAX, check_guidance, clean_guidance  # noqa: E402
 from app.pipeline import (  # noqa: E402
     eval_metrics,
@@ -125,6 +126,8 @@ if extract_clicked:
         with st.spinner("Extracting rubric..."):
             st.session_state["rubric"] = extract_rubric(jd_text)
             st.session_state["results"] = None
+    except DailyQuotaExceeded as e:
+        st.error(str(e))
     except Exception as e:  # noqa: BLE001
         st.error(f"Rubric extraction failed (API hiccup) — try the button again. Detail: {e}")
 
@@ -201,6 +204,8 @@ if extracted_rubric:
                 results = run_all(candidates, rubric, progress_cb=_cb, anonymize=anonymize, guidance=guidance)
             st.session_state["results"] = results
             st.session_state["results_rubric_sig"] = run_sig
+        except DailyQuotaExceeded as e:
+            st.error(str(e) + " Candidates already scored are cached and kept.")
         except Exception as e:  # noqa: BLE001
             st.error(f"Scoring hit an API hiccup partway through — click Run again "
                      f"(cached candidates won't re-cost quota). Detail: {e}")

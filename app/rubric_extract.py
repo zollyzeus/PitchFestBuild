@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from app.cache import get_or_compute
-from app.llm import MODEL_REASONING, call_structured
+from app.llm import DEFAULT_MODEL, MODEL_REASONING, call_structured
 from app.schemas import Rubric
 
 SYSTEM = """\
@@ -38,4 +38,5 @@ def extract_rubric(jd_text: str) -> Rubric:
             deterministic=True,
         ),
         jd_text,
+        *([] if MODEL_REASONING == DEFAULT_MODEL else [f"model:{MODEL_REASONING}"]),
     )
