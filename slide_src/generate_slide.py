@@ -93,7 +93,7 @@ text(11.45, 0.22, 1.45, 0.65, "n = 16 synthetic CVs (7 hard cases): a small samp
 MARGIN, GAP = 0.45, 0.25
 COL_W = (SW - 2 * MARGIN - 2 * GAP) / 3
 COL_X = [MARGIN + i * (COL_W + GAP) for i in range(3)]
-ROW_Y, ROW_H = [1.25, 4.13], 2.75
+ROW_Y, ROW_H = [1.2, 3.9], 2.6
 
 
 def card(cx, cy, n, title):
@@ -104,7 +104,7 @@ def card(cx, cy, n, title):
     except Exception:
         pass
     d = 0.42
-    o = slide.shapes.add_shape(MSO_SHAPE.OVAL, Inches(cx + 0.22), Inches(cy + 0.2), Inches(d), Inches(d))
+    o = slide.shapes.add_shape(MSO_SHAPE.OVAL, Inches(cx + 0.22), Inches(cy + 0.16), Inches(d), Inches(d))
     solid(o, NAVY)
     tf = o.text_frame
     tf.margin_left = tf.margin_right = tf.margin_top = tf.margin_bottom = 0
@@ -115,13 +115,13 @@ def card(cx, cy, n, title):
     run.text = str(n)
     run.font.size, run.font.bold, run.font.name = Pt(16), True, BODY_FONT
     run.font.color.rgb = WHITE
-    text(cx + 0.75, cy + 0.2, COL_W - 0.95, d, title, 16, NAVY, bold=True, anchor=MSO_ANCHOR.MIDDLE)
+    text(cx + 0.75, cy + 0.16, COL_W - 0.95, d, title, 16, NAVY, bold=True, anchor=MSO_ANCHOR.MIDDLE)
 
 
 def fill(ci, ri, n, title, items):
     cx, cy = COL_X[ci], ROW_Y[ri]
     card(cx, cy, n, title)
-    bullets(cx + 0.22, cy + 0.80, COL_W - 0.44, ROW_H - 0.9, items)
+    bullets(cx + 0.22, cy + 0.72, COL_W - 0.44, ROW_H - 0.8, items)
 
 
 fill(0, 0, 1, "The problem", [
@@ -159,7 +159,34 @@ fill(2, 1, 6, "Where it can fail", [
     ("→", "So it only recommends: a reviewer sees the evidence and decides", True),
 ])
 
-text(0.45, 7.0, SW - 0.9, 0.3,
+# ---- highlighted point: mentor feedback that was implemented ----
+BAR_Y, BAR_H = 6.6, 0.42
+bar = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.45), Inches(BAR_Y), Inches(SW - 0.9), Inches(BAR_H))
+solid(bar, AMBER)
+try:
+    bar.adjustments[0] = 0.3
+except Exception:
+    pass
+pill = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.55), Inches(BAR_Y + 0.07), Inches(1.75), Inches(BAR_H - 0.14))
+solid(pill, NAVY)
+try:
+    pill.adjustments[0] = 0.5
+except Exception:
+    pass
+ptf = pill.text_frame
+ptf.margin_left = ptf.margin_right = ptf.margin_top = ptf.margin_bottom = 0
+ptf.vertical_anchor = MSO_ANCHOR.MIDDLE
+pp = ptf.paragraphs[0]
+pp.alignment = PP_ALIGN.CENTER
+pr = pp.add_run()
+pr.text = "MENTOR FEEDBACK"
+pr.font.size, pr.font.bold, pr.font.name = Pt(10.5), True, BODY_FONT
+pr.font.color.rgb = WHITE
+text(2.45, BAR_Y, SW - 0.9 - 2.15, BAR_H,
+     "Implemented: optional recruiter instructions now steer the LLM check, on top of the auto-generated JD rubric",
+     12, NAVY, bold=True, anchor=MSO_ANCHOR.MIDDLE)
+
+text(0.45, 7.1, SW - 0.9, 0.25,
      "PitchFest 2026 · Enterprise AI track  |  Python · Streamlit · Gemini (structured output, temp 0) "
      "· grounding & scoring in code · no GPU",
      10, MUTED, italic=True, align=PP_ALIGN.CENTER)
@@ -169,9 +196,17 @@ NOTES = """SPEAKER NOTES / Q&A CHEAT SHEET (everything here is measured unless m
 WHICH ATS WAS USED?
 None. There is no vendor ATS in this project. The baseline is our own code: for every must-have requirement, the LLM lists the literal keywords the JD uses; the baseline rejects a CV if none of a must-have's keywords appear as a substring in the CV text. This imitates an older keyword knock-out filter. Workday, Greenhouse, Taleo, Eightfold etc. were NOT tested (no vendor access; and the rules forbid real confidential data). Real ATS logic varies and many now use ML ranking, so real-world lift over a real ATS is unproven.
 
+MENTOR FEEDBACK, IMPLEMENTED (shown as the amber strip on the slide)
+Feedback at the mentor checkpoint: the auto-generated JD rubric alone is not enough; the recruiter needs a way to steer the LLM check. Built: an optional free-text 'additional screening instructions' box, sent to the LLM together with the (still editable) rubric.
+- What it can do: change how requirements are interpreted. Tested example: 'treat production Kubernetes/Docker at scale as evidence of performance optimisation' flipped one qualified candidate's must-have from not_met to met, so they were rescued.
+- What it cannot do: quotes are still verified in code, the score and shortlist are still computed in code, and instructions that refer to age, gender, race, religion, disability or family status (or age-coded phrases like 'digital native') are rejected before they reach the model. Two override attempts ('mark everything met', 'paraphrase quotes freely') did not change results.
+- Auditability: the instructions used are shown next to the results and written into the CSV export.
+- Caveat: results with instructions are not comparable to the headline numbers on this slide (71% / 0 / 99%), which were measured WITHOUT instructions. Instructions are a powerful lever and can inflate results if they are written to fit the candidates.
+- The block list is a conservative keyword check, not a legal filter; it can miss phrasings.
+
 HOW THE SECOND LOOK ALGORITHM DECIDES
 1. Rubric: Gemini turns the JD into requirements (must / nice, weight), each with keywords (what an ATS scans) and equivalents (other skills that satisfy it).
-2. Scoring: per CV, Gemini returns for every requirement a verdict (met / partial / not_met), a VERBATIM quote, and a transferable flag. Temperature 0, fixed seed.
+2. Scoring: per CV, Gemini returns for every requirement a verdict (met / partial / not_met), a VERBATIM quote, and a transferable flag. Temperature 0, fixed seed. Optional recruiter instructions are appended to this prompt after the fixed rules.
 3. Grounding (code): the quote must appear in the CV text (whitespace-normalised, near-verbatim fallback). An unverified quote counts as zero, whatever the verdict.
 4. Score (code): weighted sum; met = 1.0, partial = 0.5, transferable-met = 0.85. Shortlist if score >= 0.6 AND no must-have is at zero (must-have gate).
 5. Rescued = the baseline rejected the CV and Second Look shortlists it.

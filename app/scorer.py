@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from app.cache import get_or_compute
+from app.guidance import clean_guidance, guidance_prompt_block
 from app.llm import MODEL_FAST, call_structured
 from app.schemas import (
     BiasSignal,
@@ -24,7 +25,7 @@ def _rubric_as_text(rubric: Rubric) -> str:
     return "\n".join(lines)
 
 
-def _system_prompt(rubric: Rubric, anonymized: bool = False) -> str:
+def _system_prompt(rubric: Rubric, anonymized: bool = False, guidance: str = "") -> str:
     base = f"""\
 You are an evidence-based CV reviewer. Your job is to rescue qualified candidates that a \
 blunt keyword ATS would wrongly reject, WITHOUT inventing anything.
@@ -47,6 +48,7 @@ age-coded phrasing -- each with the exact evidence span and, if the CV itself ex
 - "interview_questions": exactly 3 short, specific questions a recruiter should ask THIS \
 candidate, targeting whichever requirements came back partial, not_met, or low-confidence.
 """
+    base += guidance_prompt_block(guidance)
     if anonymized:
         base += """
 This CV has been ANONYMIZED. Tokens such as [NAME], [YEAR], [DATE], [EMAIL], [PHONE] and \
@@ -58,13 +60,16 @@ non-linear career path); you cannot assess dates, so do not try.
     return base
 
 
-def score_candidate(rubric: Rubric, candidate: Candidate, anonymized: bool = False) -> CandidateScore:
+def score_candidate(
+    rubric: Rubric, candidate: Candidate, anonymized: bool = False, guidance: str = ""
+) -> CandidateScore:
+    guidance = clean_guidance(guidance)
     raw: RawCandidateScore = get_or_compute(
         "score",
         RawCandidateScore,
         lambda: call_structured(
             model=MODEL_FAST,
-            system=_system_prompt(rubric, anonymized),
+            system=_system_prompt(rubric, anonymized, guidance),
             user_content=candidate.text,
             response_schema=RawCandidateScore,
             deterministic=True,
@@ -73,6 +78,7 @@ def score_candidate(rubric: Rubric, candidate: Candidate, anonymized: bool = Fal
         candidate.id,
         candidate.text,
         "anonymized" if anonymized else "full",
+        *([f"guidance:{guidance}"] if guidance else []),
     )
     return CandidateScore(
         candidate_id=candidate.id,

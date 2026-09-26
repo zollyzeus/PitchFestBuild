@@ -53,7 +53,9 @@ def compute_fit(score: CandidateScore, rubric: Rubric) -> bool:
     return must_gate_ok and score.fit_score >= FIT_THRESHOLD
 
 
-def run_one(candidate: Candidate, rubric: Rubric, anonymize: bool = False) -> CandidateResult:
+def run_one(
+    candidate: Candidate, rubric: Rubric, anonymize: bool = False, guidance: str = ""
+) -> CandidateResult:
     # The ATS baseline always sees the full CV (it is the thing being audited). In
     # anonymized mode only the *model* is blinded, and grounding is checked against
     # exactly the text the model was shown.
@@ -63,7 +65,7 @@ def run_one(candidate: Candidate, rubric: Rubric, anonymize: bool = False) -> Ca
         if anonymize
         else candidate
     )
-    score = score_candidate(rubric, model_view, anonymized=anonymize)
+    score = score_candidate(rubric, model_view, anonymized=anonymize, guidance=guidance)
     if anonymize:
         # Belt and braces: drop any signal that is really about our own redaction tokens.
         score.bias_signals = [
@@ -79,11 +81,12 @@ def run_one(candidate: Candidate, rubric: Rubric, anonymize: bool = False) -> Ca
 
 
 def run_all(
-    candidates: list[Candidate], rubric: Rubric, progress_cb=None, anonymize: bool = False
+    candidates: list[Candidate], rubric: Rubric, progress_cb=None, anonymize: bool = False,
+    guidance: str = "",
 ) -> list[CandidateResult]:
     results = []
     for i, c in enumerate(candidates):
-        results.append(run_one(c, rubric, anonymize=anonymize))
+        results.append(run_one(c, rubric, anonymize=anonymize, guidance=guidance))
         if progress_cb:
             progress_cb(i + 1, len(candidates))
     return results
@@ -161,7 +164,7 @@ def rescued_bias_summary(results: list[CandidateResult]) -> dict[str, int]:
 # --- F9: CSV export ---
 
 
-def results_to_csv(results: list[CandidateResult]) -> str:
+def results_to_csv(results: list[CandidateResult], guidance: str = "") -> str:
     import csv
     import io
 
@@ -171,7 +174,7 @@ def results_to_csv(results: list[CandidateResult]) -> str:
         [
             "candidate_id", "name", "ats_baseline", "ats_rules_fired", "fit_score",
             "second_look_shortlisted", "rescued", "evidence_quotes", "bias_signals",
-            "interview_questions", "planted_qualified_ground_truth",
+            "interview_questions", "planted_qualified_ground_truth", "screening_guidance",
         ]
     )
     for r in sorted(results, key=lambda r: -r.score.fit_score):
@@ -194,6 +197,7 @@ def results_to_csv(results: list[CandidateResult]) -> str:
                 bias,
                 " | ".join(r.score.interview_questions),
                 "" if r.candidate.planted_qualified is None else r.candidate.planted_qualified,
+                guidance,
             ]
         )
     return buf.getvalue()

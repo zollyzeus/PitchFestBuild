@@ -4,6 +4,7 @@ Run with:  .venv/bin/streamlit run Second_Look.py
 """
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
@@ -15,6 +16,7 @@ load_dotenv()
 
 from app.data_gen import DATASET_PATH, generate_dataset  # noqa: E402
 from app.ingest import SUPPORTED_EXTENSIONS, candidates_from_uploads  # noqa: E402
+from app.guidance import MAX_CHARS as GUIDANCE_MAX, check_guidance, clean_guidance  # noqa: E402
 from app.pipeline import (  # noqa: E402
     eval_metrics,
     pattern_report,
@@ -168,8 +170,26 @@ if extracted_rubric:
         "Free text can still carry identifying details, so this is not a guarantee. "
         "Bias signals that depend on dates can't be detected in this mode; ones stated in the CV's own words still can.",
     )
+    guidance_raw = st.text_area(
+        "Additional screening instructions (optional)",
+        value="",
+        key="guidance",
+        height=110,
+        max_chars=GUIDANCE_MAX,
+        placeholder="e.g. Treat Mesos, Nomad and ECS as equivalent to Kubernetes. We value fintech experience. "
+        "Career gaps under 2 years should not count against a candidate.",
+        help="Sent to the AI together with the rubric to steer how requirements are interpreted. It cannot "
+        "override the fixed rules: quotes are still verified in code, the score is still computed in code, "
+        "and instructions about age, gender, race, religion, disability or family status are rejected.",
+    )
+    guidance = clean_guidance(guidance_raw)
+    guidance_problems = check_guidance(guidance_raw)
+    for problem in guidance_problems:
+        st.error(problem)
+    guidance_sig = hashlib.sha256(guidance.encode()).hexdigest()[:8] if guidance else "none"
+    run_sig = f"{rubric_signature(rubric)}|anon={anonymize}|guidance={guidance_sig}"
     candidates: list[Candidate] = st.session_state["active_candidates"]
-    run_disabled = not candidates
+    run_disabled = not candidates or bool(guidance_problems)
     if st.button("Run Second Look on all candidates", disabled=run_disabled, type="primary"):
         progress = st.progress(0.0, text="Scoring candidates...")
 
@@ -178,9 +198,9 @@ if extracted_rubric:
 
         try:
             with st.spinner("Running baseline + Second Look scoring..."):
-                results = run_all(candidates, rubric, progress_cb=_cb, anonymize=anonymize)
+                results = run_all(candidates, rubric, progress_cb=_cb, anonymize=anonymize, guidance=guidance)
             st.session_state["results"] = results
-            st.session_state["results_rubric_sig"] = f"{rubric_signature(rubric)}|anon={anonymize}"
+            st.session_state["results_rubric_sig"] = run_sig
         except Exception as e:  # noqa: BLE001
             st.error(f"Scoring hit an API hiccup partway through — click Run again "
                      f"(cached candidates won't re-cost quota). Detail: {e}")
@@ -188,8 +208,8 @@ if extracted_rubric:
             progress.empty()
 
     results = st.session_state["results"]
-    if results and st.session_state.get("results_rubric_sig") != f"{rubric_signature(rubric)}|anon={anonymize}":
-        st.info("The rubric or anonymization setting changed after the last run — click **Run Second Look** again to re-screen.")
+    if results and st.session_state.get("results_rubric_sig") != run_sig:
+        st.info("The rubric, anonymization setting or instructions changed after the last run — click **Run Second Look** again to re-screen.")
         results = None
     if results:
         baseline_pass = [r for r in results if r.baseline.passed]
@@ -197,6 +217,8 @@ if extracted_rubric:
         rescued = [r for r in results if r.rescued]
 
         m = eval_metrics(results)
+        if guidance:
+            st.info(f"**Screened with your additional instructions:** {guidance}")
         st.subheader("4. Shortlists side by side")
         mc1, mc2, mc3 = st.columns(3)
         mc1.metric("ATS baseline shortlist", len(baseline_pass))
@@ -224,7 +246,7 @@ if extracted_rubric:
 
         st.download_button(
             "Download full results (CSV)",
-            data=results_to_csv(results),
+            data=results_to_csv(results, guidance=guidance),
             file_name="second_look_results.csv",
             mime="text/csv",
         )
