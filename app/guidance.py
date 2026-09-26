@@ -57,7 +57,7 @@ def check_guidance(text: str | None) -> list[str]:
         detail = "; ".join(f"{label}: {', '.join(sorted(words))}" for label, words in found.items())
         problems.append(
             "These instructions refer to a protected characteristic or an age-coded phrase "
-            f"({detail}). Second Look does not screen on those. Please rephrase in terms of "
+            f"({detail}). Relook does not screen on those. Please rephrase in terms of "
             "skills and experience."
         )
     return problems

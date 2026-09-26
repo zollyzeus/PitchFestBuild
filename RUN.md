@@ -1,9 +1,9 @@
-# Second Look — run guide & honest status
+# Relook — run guide & honest status
 
 ## Start it
 ```bash
 cd /home/anand/Downloads/PitchFestBuild
-.venv/bin/streamlit run Second_Look.py          # http://localhost:8501
+.venv/bin/streamlit run Relook.py          # http://localhost:8501
 ```
 `.env` holds `GEMINI_API_KEY` (gitignored). `data/dataset.json` is the demo pool (1 JD + 16 synthetic CVs with planted ground truth). `data/cache/` holds every scored result, so a re-run of the demo pool is **instant and free**.
 
@@ -16,7 +16,7 @@ Regenerate the demo dataset (uses quota): `.venv/bin/python -m app.data_gen`
 | F2 | Ingest CVs as PDF / DOCX / TXT | Built + tested on real files. Scanned/image-only PDFs have no text layer: skipped with a warning (no OCR) |
 | F3 | Keyword-ATS baseline, shows which rule fired | Built + tested |
 | F4 | Per-requirement verdict with verbatim quote, verified in code | Built + tested |
-| F5 | Rescued = ATS rejected, Second Look shortlists | Built + tested |
+| F5 | Rescued = ATS rejected, Relook shortlists | Built + tested |
 | F6 | Bias signals (gaps, non-linear careers, age-coded wording) | Built; tested on real flagged candidates |
 | F7 | 3 interview questions per candidate | Built (rendered in candidate detail) |
 | F8 | Rejection-pattern report per ATS rule | Built + tested |
@@ -48,16 +48,16 @@ Tested (real API calls, n small):
 - Empty instructions leave the prompt and cache key unchanged, so warmed results stay valid.
 
 ## API quota: the free tier ran out today (read this before the demo)
-On 2026-09-26 the key hit **`GenerateRequestsPerDayPerProjectPerModel-FreeTier`: 500 requests/day for the default model**, shared by everything using the key (Second Look and the Baton window). Consequences:
+On 2026-09-26 the key hit **`GenerateRequestsPerDayPerProjectPerModel-FreeTier`: 500 requests/day for the default model**, shared by everything using the key (Relook and the Baton window). Consequences:
 - **Cached work still runs instantly:** the demo pool, the demo JD, and anything already scored. Warmed results are untouched (verified: 0 API calls, same 5/7 and 0/6).
 - **Every fresh call fails until the reset (midnight Pacific time)**: a new JD, uploaded CVs, new instructions on uncached candidates, anonymized runs not already cached. The app now fails fast with a clear message instead of retrying for minutes.
 - **Fixes, best first:** (1) enable billing on the Google AI Studio project for the key; (2) create an API key in a *new* project (fresh allowance) and put it in `.env`; (3) stopgap below.
-- **Stopgap model:** `gemini-3.1-flash-lite` has its own daily allowance. Set `GEMINI_MODEL_FAST=gemini-3.1-flash-lite` and `GEMINI_MODEL_REASONING=gemini-3.1-flash-lite` (in the shell, or in `.env` for Second Look) and restart. Its results are cached separately and never mix with the default model's. **It is not equivalent.** Same rubric, same 16 CVs: recall **3/7** (vs 5/7), false rescues 0/6 (same), quotes verified **91.7%** (vs 98.5%), 92% verdict agreement, rescued sets overlap 2 of 5. The headline numbers on the slide are for the default model only.
+- **Stopgap model:** `gemini-3.1-flash-lite` has its own daily allowance. Set `GEMINI_MODEL_FAST=gemini-3.1-flash-lite` and `GEMINI_MODEL_REASONING=gemini-3.1-flash-lite` (in the shell, or in `.env` for Relook) and restart. Its results are cached separately and never mix with the default model's. **It is not equivalent.** Same rubric, same 16 CVs: recall **3/7** (vs 5/7), false rescues 0/6 (same), quotes verified **91.7%** (vs 98.5%), 92% verdict agreement, rescued sets overlap 2 of 5. The headline numbers on the slide are for the default model only.
 - Not measured: whether the stopgap model extracts a good rubric from a fresh JD (only its scoring was tested).
 
 ## Things to say out loud (caveats)
 1. **Small evaluation:** n=16, 7 hard cases, synthetic data written by an LLM. Recall 5/7 is indicative, not statistical proof. Synthetic CVs are also short and clean.
-2. **Free-tier API limit (15 requests/min), shared by every window using the key.** The app throttles itself to 12/min per process, but two processes (e.g. Second Look and a Baton run at the same time) split one allowance: a fresh 16-CV run took **over 5 minutes** while a Baton evaluation ran concurrently. Never run both during the demo. A *fresh* 16-candidate run takes **~2 minutes**; cached runs are instant. Pre-run anything you plan to show. Enabling billing on the Gemini key removes this.
+2. **Free-tier API limit (15 requests/min), shared by every window using the key.** The app throttles itself to 12/min per process, but two processes (e.g. Relook and a Baton run at the same time) split one allowance: a fresh 16-CV run took **over 5 minutes** while a Baton evaluation ran concurrently. Never run both during the demo. A *fresh* 16-candidate run takes **~2 minutes**; cached runs are instant. Pre-run anything you plan to show. Enabling billing on the Gemini key removes this.
 3. Anonymization is a heuristic scrub of names / contact details / dates in the text the *model* sees (the ATS baseline is unchanged). Free text can still identify someone; a bare 7-digit local phone number is only partly masked. Date-based bias signals can't fire in this mode.
 4. The keyword baseline imitates a typical ATS knock-out filter; real ATS logic varies by vendor.
 5. Recommends only; never auto-rejects or auto-hires. Bias flags are signals for a reviewer, not a legal audit.
@@ -65,7 +65,7 @@ On 2026-09-26 the key hit **`GenerateRequestsPerDayPerProjectPerModel-FreeTier`:
 
 ## Demo flow (7 min)
 1. JD is pre-filled → **Extract rubric** (cached, instant). Show `keywords` (what the ATS scans) vs `equivalents` (what it misses).
-2. **Run Second Look** (cached) → two shortlists, 🟢 RESCUED badges, live eval line.
+2. **Run Relook** (cached) → two shortlists, 🟢 RESCUED badges, live eval line.
 3. **Rejection pattern report**: one rule ("performance under heavy loads") rejected 13 candidates; 7 were genuinely qualified.
 4. Open a rescued candidate: quotes, bias signals (caregiving break shown as *explained*), interview questions.
 5. **Live edit:** add two synonyms to that rule's keywords → the ATS shortlist changes (3 → 6 when tested). Shows how brittle keyword lists are.
@@ -77,4 +77,4 @@ On 2026-09-26 the key hit **`GenerateRequestsPerDayPerProjectPerModel-FreeTier`:
 The app retries 503s with backoff and honors the server's "retry in Ns" on 429s. On a final failure it shows a message; click again — finished candidates are cached, only the failed one is retried.
 
 ## Layout
-`Second_Look.py` (Streamlit entrypoint, must stay at repo root; its filename is the sidebar label; `ui.py` is a compatibility shim) · `app/` (schemas, llm, cache, rubric_extract, rubric_edit, baseline, scorer, grounding, pipeline, ingest, anonymize, data_gen) · `slide_src/generate_slide.py` → `Second_Look_One_Pager.pptx` · `docs/` (planning specs). NOTE: a `baton/` package exists from a separate session; it is not covered or tested by this guide.
+`Relook.py` (Streamlit entrypoint, must stay at repo root; its filename is the sidebar label; `ui.py` is a compatibility shim) · `app/` (schemas, llm, cache, rubric_extract, rubric_edit, baseline, scorer, grounding, pipeline, ingest, anonymize, data_gen) · `slide_src/generate_slide.py` → `Relook_One_Pager.pptx` · `docs/` (planning specs). NOTE: a `baton/` package exists from a separate session; it is not covered or tested by this guide.

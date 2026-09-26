@@ -9,7 +9,7 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-CACHE_DIR = Path(os.environ.get("SECOND_LOOK_CACHE_DIR", "data/cache"))
+CACHE_DIR = Path(os.environ.get("RELOOK_CACHE_DIR", "data/cache"))
 
 # Bump this if a prompt changes shape, to invalidate stale cached results.
 PROMPT_VERSION = "v2-deterministic"  # v1 results were sampled at default temperature

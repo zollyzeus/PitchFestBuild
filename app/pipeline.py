@@ -1,5 +1,5 @@
 """Orchestrates baseline + AI scoring + grounding + the deterministic fit score
-that decides the Second Look shortlist. The score NUMBER is always computed
+that decides the Relook shortlist. The score NUMBER is always computed
 here in plain Python from grounded verdicts -- never asserted by the model."""
 from __future__ import annotations
 
@@ -25,13 +25,13 @@ class CandidateResult:
     candidate: Candidate
     baseline: BaselineResult
     score: CandidateScore
-    rescued: bool  # baseline rejected it, Second Look shortlists it
-    shortlisted: bool = False  # Second Look's actual decision (fit bar AND must-have gate)
+    rescued: bool  # baseline rejected it, Relook shortlists it
+    shortlisted: bool = False  # Relook's actual decision (fit bar AND must-have gate)
 
 
 def compute_fit(score: CandidateScore, rubric: Rubric) -> bool:
     """Fills in score.fit_score / must_have_gate_passed in place; returns
-    whether the candidate clears the Second Look shortlist bar."""
+    whether the candidate clears the Relook shortlist bar."""
     weight_by_id = {r.id: r.weight for r in rubric.requirements}
     must_ids = {r.id for r in rubric.requirements if r.type == "must"}
     total_w = sum(weight_by_id.values()) or 1
@@ -124,7 +124,7 @@ def eval_metrics(results: list[CandidateResult]) -> dict:
 
 def pattern_report(results: list[CandidateResult], rubric: Rubric) -> list[dict]:
     """Per must-have rule: how many candidates the keyword baseline rejected on it,
-    how many of those Second Look rescued, how many were genuinely qualified per the
+    how many of those Relook rescued, how many were genuinely qualified per the
     planted ground truth (if present), and how many carry a bias signal. This is the
     'which filter rule is silently removing good people' view a compliance team wants."""
     rows = []
@@ -139,7 +139,7 @@ def pattern_report(results: list[CandidateResult], rubric: Rubric) -> list[dict]
                 "rule": f"{req.id}: {req.text}",
                 "keywords_the_ATS_scanned_for": ", ".join(req.keywords) or "-",
                 "rejected_by_rule": len(hit),
-                "rescued_by_second_look": sum(1 for r in hit if r.rescued),
+                "rescued_by_relook": sum(1 for r in hit if r.rescued),
                 "truly_qualified_(ground_truth)": sum(
                     1 for r in hit if r.candidate.planted_qualified is True
                 ),
@@ -173,7 +173,7 @@ def results_to_csv(results: list[CandidateResult], guidance: str = "") -> str:
     w.writerow(
         [
             "candidate_id", "name", "ats_baseline", "ats_rules_fired", "fit_score",
-            "second_look_shortlisted", "rescued", "evidence_quotes", "bias_signals",
+            "relook_shortlisted", "rescued", "evidence_quotes", "bias_signals",
             "interview_questions", "planted_qualified_ground_truth", "screening_guidance",
         ]
     )

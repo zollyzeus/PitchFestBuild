@@ -1,12 +1,12 @@
-> **Superseded:** the real slide is `Second_Look_One_Pager.pptx` (its speaker notes hold the full Q&A sheet: baseline used, algorithm, pros/cons, corner cases, human-in-the-loop). This text is kept only for reference and is less complete.
+> **Superseded:** the real slide is `Relook_One_Pager.pptx` (its speaker notes hold the full Q&A sheet: baseline used, algorithm, pros/cons, corner cases, human-in-the-loop). This text is kept only for reference and is less complete.
 
-# Slide content — Second Look
+# Slide content — Relook
 
 *(Paste into a single slide. Keep it to headline + 4 sections; don't read it verbatim, use it as talking points.)*
 
 ---
 
-## Second Look
+## Relook
 ### Rescuing qualified people the keyword ATS rejected
 
 **The problem**
@@ -17,7 +17,7 @@ Keyword-matching ATS software rejects real, qualified candidates whose experienc
 - Every candidate is scored per-requirement with a **verbatim quote** as evidence — no quote, no credit.
 - A code-level grounding check verifies every quote actually appears in the CV; unverified claims never count.
 - Deterministic fit score (computed in Python, not asserted by the model) decides the shortlist.
-- Rescued = baseline ATS rejected them, Second Look shortlists them, with the evidence to show why.
+- Rescued = baseline ATS rejected them, Relook shortlists them, with the evidence to show why.
 
 **How AI is used**
 - Gemini (`flash-lite-latest`) does two jobs only: (1) turn a JD into a structured rubric, (2) read one CV and return evidence quotes + bias signals + interview questions — always as schema-validated JSON, never free text.

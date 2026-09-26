@@ -1,7 +1,7 @@
 """Convert a Rubric to/from plain table rows so it can be edited live in the UI.
 
 Editing is meaningful: keywords drive the keyword-ATS baseline, equivalents and
-type/weight drive the Second Look scoring, so a judge can change a requirement and
+type/weight drive the Relook scoring, so a judge can change a requirement and
 watch both shortlists respond after re-running.
 """
 from __future__ import annotations

@@ -1,5 +1,5 @@
 """A deterministic stand-in for a blunt, keyword-matching ATS. Pure Python,
-no model call: this is exactly the kind of filter Second Look is auditing."""
+no model call: this is exactly the kind of filter Relook is auditing."""
 from __future__ import annotations
 
 from app.schemas import BaselineResult, Candidate, Rubric

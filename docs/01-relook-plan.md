@@ -1,4 +1,4 @@
-# Second Look — ATS Rejection Audit: Planning Doc
+# Relook — ATS Rejection Audit: Planning Doc
 
 > **Status note:** this is the original plan. See [../RUN.md](../RUN.md) for what was actually built, measured results and known caveats. Deviations: LLM is Gemini (not Claude); UI is Streamlit; no rapidfuzz (stdlib difflib grounding); free-tier API limit means a fresh 16-CV run takes ~2 min, not the <90 s originally targeted for 30 CVs.
 
@@ -6,7 +6,7 @@ Sep 26, 2026 · @Anand
 
 ## Problem framing and assumptions
 
-Second Look re-screens the candidates a keyword ATS rejected and surfaces the qualified ones it missed, with cited evidence and bias flags. It is the employer-side answer to the problem Greyin exists for: senior talent filtered out by keyword software.
+Relook re-screens the candidates a keyword ATS rejected and surfaces the qualified ones it missed, with cited evidence and bias flags. It is the employer-side answer to the problem Greyin exists for: senior talent filtered out by keyword software.
 
 **Problem statement.** Enterprise talent teams run keyword and knock-out filters because they cannot read every CV. Those filters reject candidates whose experience is real but phrased differently: career changers, returners after a gap, senior people whose titles predate current buzzwords. The enterprise loses candidates it already paid to attract, lengthens time-to-hire, and carries legal exposure where a filter acts as an age or gap proxy.
 
@@ -18,10 +18,10 @@ Second Look re-screens the candidates a keyword ATS rejected and surfaces the qu
 
 **Assumptions to state at the demo**
 
-1. The enterprise can export applicants and ATS outcomes as CSV or PDF CVs. Second Look reads exports; it does not integrate with a live ATS in the prototype.
+1. The enterprise can export applicants and ATS outcomes as CSV or PDF CVs. Relook reads exports; it does not integrate with a live ATS in the prototype.
 2. All CVs and job descriptions are synthetic, generated for the demo. No real personal data is used.
 3. The keyword baseline imitates a typical ATS knock-out filter (required-keyword match plus a minimum-score threshold). Real ATS logic varies by vendor.
-4. Second Look recommends a human second review. It never auto-rejects or auto-hires anyone.
+4. Relook recommends a human second review. It never auto-rejects or auto-hires anyone.
 5. Bias flags are signals for a reviewer, not a legal bias audit.
 6. Any Greyin code used must be public and disclosed; the prototype is built fresh during the challenge window.
 
@@ -29,7 +29,7 @@ Second Look re-screens the candidates a keyword ATS rejected and surfaces the qu
 
 The primary user is a recruiter or talent-acquisition lead who owns a requisition with a large rejected pile. Hiring managers and HR compliance consume the output.
 
-| User | Need | What Second Look gives them |
+| User | Need | What Relook gives them |
 | --- | --- | --- |
 | Recruiter / TA lead | Find good candidates the filter dropped, without reading 200 CVs | A ranked "rescue list" with evidence quotes per requirement |
 | Hiring manager | Trust the shortlist quickly | A one-screen card per candidate: fit score, evidence, open questions to ask |
@@ -38,10 +38,10 @@ The primary user is a recruiter or talent-acquisition lead who owns a requisitio
 **Core journey**
 
 1. Recruiter pastes or uploads a job description.
-2. Second Look extracts a requirements rubric (must-have, nice-to-have, each with acceptable evidence) and lets the recruiter edit it.
+2. Relook extracts a requirements rubric (must-have, nice-to-have, each with acceptable evidence) and lets the recruiter edit it.
 3. Recruiter uploads the applicant CVs plus ATS outcomes (or runs the built-in keyword baseline).
 4. Each CV is scored against the rubric with quoted evidence; transferable skills are mapped to requirements.
-5. The UI shows the ATS shortlist beside the Second Look shortlist and highlights "rescued" candidates.
+5. The UI shows the ATS shortlist beside the Relook shortlist and highlights "rescued" candidates.
 6. The recruiter opens a rescued candidate and sees evidence, gaps, bias flags and suggested interview questions.
 7. A pattern report summarises which filter rules caused false rejections.
 
@@ -51,7 +51,7 @@ The primary user is a recruiter or talent-acquisition lead who owns a requisitio
 | --- | --- | --- |
 | 0:00-0:45 | The problem, one slide | Qualified people rejected by keyword filters, with the Greyin link (use only a sourced statistic) |
 | 0:45-1:30 | Paste a job description; AI builds the rubric live | Editable rubric table |
-| 1:30-3:00 | Run 30 synthetic CVs through the keyword filter and Second Look | Two columns; rescued candidates highlighted |
+| 1:30-3:00 | Run 30 synthetic CVs through the keyword filter and Relook | Two columns; rescued candidates highlighted |
 | 3:00-4:30 | Open two rescued candidates: a career changer and a returner after a 3-year gap | Evidence quotes mapped to each requirement, bias flags, interview questions |
 | 4:30-5:30 | Judge's turn: judge edits a requirement or pastes their own JD; rerun | Results change live, proving no hardcoding |
 | 5:30-6:15 | Pattern report | "Rule 'must mention Kubernetes' removed 6 qualified candidates, 4 of them 45+ by inferred career length" |
@@ -71,7 +71,7 @@ The prototype must do seven things live, on inputs the judge can change; everyth
 | F2 | Ingest CVs as PDF, DOCX or pasted text; batch of at least 30 | 30 CVs parsed without manual fixes |
 | F3 | Run a transparent keyword baseline that imitates an ATS knock-out filter | Shows which keyword rule rejected each candidate |
 | F4 | Score every CV per rubric item with a verbatim evidence quote and a confidence | Every score cites a quote found in the CV text |
-| F5 | Flag rescued candidates: rejected by the baseline, scored at or above the shortlist bar by Second Look | Rescued list with reason in one line each |
+| F5 | Flag rescued candidates: rejected by the baseline, scored at or above the shortlist bar by Relook | Rescued list with reason in one line each |
 | F6 | Detect bias signals: graduation year, total years, gaps, age-coded words, non-linear careers | Flags shown per candidate with the triggering text |
 | F7 | Generate 3 targeted interview questions per rescued candidate to probe unverified requirements | Questions reference the candidate's own gaps |
 
@@ -98,7 +98,7 @@ The prototype must do seven things live, on inputs the judge can change; everyth
 
 A single Python process runs a deterministic pipeline with three LLM steps; everything the model says passes a code-level grounding check before it reaches the screen.
 
-*(Diagram: Second Look pipeline — 9 components)*
+*(Diagram: Relook pipeline — 9 components)*
 
 The keyword baseline and the Evidence scorer see the same parsed CVs, so the side-by-side comparison is fair.
 
@@ -157,7 +157,7 @@ The model reads for evidence, the code enforces it: every judgement the LLM make
   "equivalents": ["Nomad", "ECS", "Mesos"], "min_years": null}]}
 ```
 
-The `equivalents` list is what separates Second Look from keyword matching: it encodes transferable evidence the JD never spelled out.
+The `equivalents` list is what separates Relook from keyword matching: it encodes transferable evidence the JD never spelled out.
 
 **Step 2: evidence scoring (Haiku 4.5, one call per CV).** The rubric sits in a cached system prompt; the CV is the user turn. Output per requirement:
 
@@ -195,33 +195,33 @@ The prompt is not the moat; the moat is the data loop and the position in the wo
 
 **Defensible today (in the prototype)**
 
-1. **Rejected-pile position.** Incumbents rank applicants going forward. Second Look audits decisions already made, a slot nobody owns and the one compliance teams care about.
+1. **Rejected-pile position.** Incumbents rank applicants going forward. Relook audits decisions already made, a slot nobody owns and the one compliance teams care about.
 2. **Evidence grounding in code.** Scores are computed from verified quotes, not from model opinion. That makes output auditable, which is what a bias-audit or AI-regulation reviewer asks for.
 3. **Counterfactual comparison.** Showing baseline versus evidence-based decisions per rule is itself the audit artefact; ranking tools do not produce it.
 
 **Defensible over time (with Greyin)**
 
 1. **Transferable-skill equivalence graph.** Every recruiter edit to a rubric's `equivalents`, and every rescued candidate who is later hired, teaches which old skills map to which new ones (Mesos to Kubernetes, mainframe batch to data pipelines). This proprietary graph compounds per role family.
-2. **Outcome labels.** Rescued-then-hired-then-retained is a label no keyword ATS collects. It lets Second Look calibrate scores against real performance, not CV wording.
-3. **Verified-evidence supply.** Greyin's Verified Expert status (earned via FlexPro, StackWorks and GreyMatters work) is external evidence a CV cannot fake. Second Look can pull it in as a stronger signal than self-reported text.
-4. **Two-sided flywheel.** Enterprises that use Second Look see rescued senior candidates; those candidates are routed to Greyin's DeepEdge pool; a larger pool makes DeepEdge more valuable to the same enterprises.
+2. **Outcome labels.** Rescued-then-hired-then-retained is a label no keyword ATS collects. It lets Relook calibrate scores against real performance, not CV wording.
+3. **Verified-evidence supply.** Greyin's Verified Expert status (earned via FlexPro, StackWorks and GreyMatters work) is external evidence a CV cannot fake. Relook can pull it in as a stronger signal than self-reported text.
+4. **Two-sided flywheel.** Enterprises that use Relook see rescued senior candidates; those candidates are routed to Greyin's DeepEdge pool; a larger pool makes DeepEdge more valuable to the same enterprises.
 5. **Compliance workflow lock-in.** Once audit reports feed HR's regulatory evidence (for example NYC Local Law 144 bias audits or EU AI Act high-risk obligations for hiring tools), switching means redoing the audit trail.
 
 ## Competitive landscape and differentiation
 
-Incumbents either rank candidates going forward or audit tools statistically; none of the products reviewed re-reads individual rejected candidates, and the bias audit reviewed does not cover age. Second Look fills both gaps.
+Incumbents either rank candidates going forward or audit tools statistically; none of the products reviewed re-reads individual rejected candidates, and the bias audit reviewed does not cover age. Relook fills both gaps.
 
-| Product | What it does | Gap Second Look fills |
+| Product | What it does | Gap Relook fills |
 | --- | --- | --- |
 | [Workday Recruiting with HiredScore](https://www.workday.com/en-us/products/talent-management/ai-recruiting.html) | AI candidate grading and talent rediscovery from existing databases, inside Workday | Rediscovery aims at future openings; it does not audit why a specific rejection happened. It is also the vendor named in the age-discrimination case below |
 | [Eightfold AI](https://eightfold.ai/) | Talent intelligence: skills inference, matching, AI interviewer; sold to Fortune 500 | Ranks and matches; an enterprise platform replacement, not a light audit over an existing ATS |
 | [Warden AI](https://www.warden-ai.com/nyc-local-law-144) | Independent NYC Local Law 144 bias audits: selection-rate and impact-ratio statistics by race, ethnicity and sex | Aggregate statistics only, no age attribute, no per-candidate evidence or rescue |
 | Holistic AI and similar AI-governance platforms | Bias-audit reports for LL144 compliance ([Warden and Holistic AI both surfaced in LL144 search](https://www.warden-ai.com/resources/nyc-bias-audit)) | Same: compliance reporting, not candidate recovery |
-| Manual false-negative sampling | Guides recommend to "sample rejected candidates to estimate missed qualified candidates" ([MiHCM](https://mihcm.com/resources/blog/resume-screening-in-2026-a-guide-to-ai-powered-screening-ats-integration-bias-governance/)) | Second Look automates this practice across the whole rejected pile, not a sample |
+| Manual false-negative sampling | Guides recommend to "sample rejected candidates to estimate missed qualified candidates" ([MiHCM](https://mihcm.com/resources/blog/resume-screening-in-2026-a-guide-to-ai-powered-screening-ats-integration-bias-governance/)) | Relook automates this practice across the whole rejected pile, not a sample |
 
-**Why now.** In [Mobley v. Workday](https://www.maynardnexsen.com/publication-emerging-liability-for-ai-driven-hiring-tools-key-developments-in-mobley-v-workday-inc), the court conditionally certified an age-discrimination (ADEA, 40+) collective on May 16, 2025. The alleged proxies are exactly what Second Look flags: employment gaps, years of experience, educational background. California, Illinois, Colorado and Texas have AI hiring laws, so employers face exposure in several jurisdictions.
+**Why now.** In [Mobley v. Workday](https://www.maynardnexsen.com/publication-emerging-liability-for-ai-driven-hiring-tools-key-developments-in-mobley-v-workday-inc), the court conditionally certified an age-discrimination (ADEA, 40+) collective on May 16, 2025. The alleged proxies are exactly what Relook flags: employment gaps, years of experience, educational background. California, Illinois, Colorado and Texas have AI hiring laws, so employers face exposure in several jurisdictions.
 
-**Positioning in one line.** Second Look is an evidence-based second reader that sits beside any ATS, recovers qualified people the filter dropped, and produces the per-candidate audit trail compliance needs, with age and career gaps in scope.
+**Positioning in one line.** Relook is an evidence-based second reader that sits beside any ATS, recovers qualified people the filter dropped, and produces the per-candidate audit trail compliance needs, with age and career gaps in scope.
 
 **Differentiators to say out loud**
 
@@ -232,7 +232,7 @@ Incumbents either rank candidates going forward or audit tools statistically; no
 
 ## Build plan, risks and next steps
 
-**Feasibility check: one builder, one idea.** A solo builder cannot take both Second Look and Baton to a demoable state in one day; committing fully to Second Look is the plan (see the [Baton doc](https://claude.ai/artifact/A5Dxf4SZjbNH6u8G4DFXBQ) note below on why it's parked, not built, today). The schedule below assumes a 9:30 am start, one person, and a hard stop for coding at 4:00 pm so the last 90 minutes go to the slide, rehearsal and a backup video before the 5:30 pm demo.
+**Feasibility check: one builder, one idea.** A solo builder cannot take both Relook and Baton to a demoable state in one day; committing fully to Relook is the plan (see the [Baton doc](https://claude.ai/artifact/A5Dxf4SZjbNH6u8G4DFXBQ) note below on why it's parked, not built, today). The schedule below assumes a 9:30 am start, one person, and a hard stop for coding at 4:00 pm so the last 90 minutes go to the slide, rehearsal and a backup video before the 5:30 pm demo.
 
 | Time | Block | Task | Exit check |
 | --- | --- | --- | --- |
@@ -252,7 +252,7 @@ Incumbents either rank candidates going forward or audit tools statistically; no
 | 17:05-17:20 | Ship | Final commit, upload code to the submission link | Link confirmed working |
 | 17:20-17:30 | Buffer | Walk to the judge table, breathe | — |
 
-**Checkpoints, not a switch:** if the 11:10 or 13:10 exit checks are missed, cut scope further (drop F6/F7/F8, keep only the rescue comparison) rather than switching ideas — a half-built Second Look beats two unfinished ones.
+**Checkpoints, not a switch:** if the 11:10 or 13:10 exit checks are missed, cut scope further (drop F6/F7/F8, keep only the rescue comparison) rather than switching ideas — a half-built Relook beats two unfinished ones.
 
 **Risks and mitigations**
 
