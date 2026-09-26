@@ -1,3 +1,5 @@
+> **Superseded:** the real slide is `Second_Look_One_Pager.pptx` (its speaker notes hold the full Q&A sheet: baseline used, algorithm, pros/cons, corner cases, human-in-the-loop). This text is kept only for reference and is less complete.
+
 # Slide content — Second Look
 
 *(Paste into a single slide. Keep it to headline + 4 sections; don't read it verbatim, use it as talking points.)*
