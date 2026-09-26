@@ -3,7 +3,7 @@
 ## Start it
 ```bash
 cd /home/anand/Downloads/PitchFestBuild
-.venv/bin/streamlit run ui.py          # http://localhost:8501
+.venv/bin/streamlit run Second_Look.py          # http://localhost:8501
 ```
 `.env` holds `GEMINI_API_KEY` (gitignored). `data/dataset.json` is the demo pool (1 JD + 16 synthetic CVs with planted ground truth). `data/cache/` holds every scored result, so a re-run of the demo pool is **instant and free**.
 
@@ -53,4 +53,4 @@ Regenerate the demo dataset (uses quota): `.venv/bin/python -m app.data_gen`
 The app retries 503s with backoff and honors the server's "retry in Ns" on 429s. On a final failure it shows a message; click again — finished candidates are cached, only the failed one is retried.
 
 ## Layout
-`ui.py` (Streamlit entrypoint, must stay at repo root) · `app/` (schemas, llm, cache, rubric_extract, rubric_edit, baseline, scorer, grounding, pipeline, ingest, anonymize, data_gen) · `slide_src/generate_slide.py` → `Second_Look_One_Pager.pptx` · `docs/` (planning specs). NOTE: a `baton/` package exists from a separate session; it is not covered or tested by this guide.
+`Second_Look.py` (Streamlit entrypoint, must stay at repo root; its filename is the sidebar label; `ui.py` is a compatibility shim) · `app/` (schemas, llm, cache, rubric_extract, rubric_edit, baseline, scorer, grounding, pipeline, ingest, anonymize, data_gen) · `slide_src/generate_slide.py` → `Second_Look_One_Pager.pptx` · `docs/` (planning specs). NOTE: a `baton/` package exists from a separate session; it is not covered or tested by this guide.
