@@ -1,5 +1,7 @@
 # Second Look — ATS Rejection Audit: Planning Doc
 
+> **Status note:** this is the original plan. See [../RUN.md](../RUN.md) for what was actually built, measured results and known caveats. Deviations: LLM is Gemini (not Claude); UI is Streamlit; no rapidfuzz (stdlib difflib grounding); free-tier API limit means a fresh 16-CV run takes ~2 min, not the <90 s originally targeted for 30 CVs.
+
 Sep 26, 2026 · @Anand
 
 ## Problem framing and assumptions

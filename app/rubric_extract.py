@@ -35,6 +35,7 @@ def extract_rubric(jd_text: str) -> Rubric:
             system=SYSTEM,
             user_content=jd_text,
             response_schema=Rubric,
+            deterministic=True,
         ),
         jd_text,
     )

@@ -187,7 +187,7 @@ add_bullets(
         "Keyword ATS filters reject real skill over how it's phrased",
         "Enterprises lose candidates they already paid to attract",
         "Often tracks age/gap bias — see: Mobley v. Workday",
-        "Existing tools rank new applicants — nobody re-audits rejections",
+        "Existing tools mostly rank new applicants — few re-audit past rejections",
     ],
     14, NAVY,
 )
@@ -199,7 +199,8 @@ add_bullets(
         "Extracts “keywords” (what ATS scans) vs. “equivalents” it misses",
         "Per CV: verbatim evidence quote, bias flags, 3 interview questions",
         "Code — not the model — verifies quotes & computes the score",
-        "Live-proven: a new JD instantly changes the rubric & shortlist",
+        "Live-proven: paste a new JD and the rubric & shortlist change",
+        "Reproducible: 112/112 verdicts identical across independent runs",
     ],
     13.5, NAVY,
 )
@@ -207,7 +208,7 @@ add_bullets(
 # --- column 3: business value (stats row + bullets)
 STAT_Y = COL_Y + 1.15
 stat_w = (COL_W - 0.6 - 2 * 0.15) / 3
-stats = [("71%", "hard-rescue\nrecall"), ("0", "false\nrescues"), ("100%", "grounding\nrate")]
+stats = [("71%", "hard-rescue\nrecall"), ("0", "false\nrescues"), ("99%", "quotes\nverified")]
 for j, (num, cap) in enumerate(stats):
     sx = COL_X[2] + 0.3 + j * (stat_w + 0.15)
     add_text(sx, STAT_Y, stat_w, 0.55, num, 26, AMBER, bold=True, font=HEAD_FONT,
@@ -219,7 +220,7 @@ add_bullets(
     COL_X[2] + 0.3, STAT_Y + 1.25, COL_W - 0.6, COL_H - (1.25 + STAT_Y - COL_Y) - 0.3,
     [
         "Recovers qualified people — without lowering the bar",
-        "Evidence-backed audit trail for hiring-bias compliance",
+        "Audit trail: evidence, rejection-pattern report, CSV export",
         "Always human-in-the-loop — recommends, never decides",
     ],
     14, NAVY,

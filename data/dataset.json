@@ -1,0 +1,118 @@
+{
+  "role_title": "Backend Engineer, Distributed Systems",
+  "jd_text": "We are seeking a mid-to-senior Backend Engineer to join our Distributed Systems team. You will build and scale our core data processing pipelines and microservices architecture supporting millions of global users. Responsibilities include designing high-throughput APIs, implementing robust fault tolerance, and improving system observability across our infrastructure. Required Qualifications: 5+ years of backend software engineering experience. Strong proficiency in Go or Rust. Deep hands-on experience building distributed systems using Kubernetes, Docker, and Kafka. Experience with relational and NoSQL databases such as PostgreSQL and Cassandra. Proven track record of optimizing system performance and latency under heavy loads. Preferred Qualifications: Experience with gRPC, Prometheus, and Grafana. Bachelor's degree in Computer Science or equivalent practical experience.",
+  "candidates": [
+    {
+      "id": "C01",
+      "name": "Marcus Vance",
+      "text": "Professional Summary: Senior Backend Engineer with over 6 years of experience designing and scaling distributed systems in fast-paced tech environments. Strong proficiency in Go and Rust with a proven track record of building low-latency microservices. Experience: Senior Software Engineer at Apex Cloud Systems (2021-Present): Architected and maintained high-throughput APIs using Go, handling over 50,000 requests per second. Deployed and managed containerized workloads using Kubernetes and Docker on AWS infrastructure. Implemented event-driven architectures utilizing Apache Kafka for real-time data streaming across multiple regions. Optimized PostgreSQL and Cassandra database clusters to reduce read/write latency by 35%. Software Engineer at ByteStream Tech (2018-2021): Developed backend microservices using Go and gRPC for internal data pipelines. Integrated Prometheus and Grafana for system monitoring and alerting, improving overall system observability. Collaborated with cross-functional teams to ensure fault tolerance and high availability. Skills: Go, Rust, Kubernetes, Docker, Kafka, PostgreSQL, Cassandra, gRPC, Prometheus, Grafana, AWS.",
+      "planted_qualified": true,
+      "planted_reason": "clear match"
+    },
+    {
+      "id": "C02",
+      "name": "Elena Rostova",
+      "text": "Professional Summary: Backend Software Engineer with 5 years of focused experience in distributed data processing and microservices architecture. Expert in Go development and cloud-native infrastructure. Experience: Backend Engineer at Nebula Data (2020-Present): Designed, built, and scaled core data processing pipelines processing terabytes of data daily using Go and Apache Kafka. Containerized services with Docker and orchestrated them using Kubernetes on Google Cloud Platform. Managed PostgreSQL schemas and Cassandra NoSQL tables for high-availability storage. Improved system observability by setting up Prometheus metrics and Grafana dashboards. Junior Backend Developer at CloudScale Solutions (2018-2020): Assisted in developing RESTful APIs and microservices in Go. Participated in on-call rotations and incident response, ensuring high fault tolerance. Skills: Go, Kubernetes, Docker, Kafka, PostgreSQL, Cassandra, Prometheus, Grafana, gRPC.",
+      "planted_qualified": true,
+      "planted_reason": "clear match"
+    },
+    {
+      "id": "C03",
+      "name": "David Kim",
+      "text": "Professional Summary: Distributed Systems Engineer with 7 years of backend engineering expertise specializing in high-throughput services and fault-tolerant architecture. Experience: Lead Backend Engineer at Titan Infrastructure (2019-Present): Built and scaled distributed backends using Rust and Go, focusing on zero-cost abstractions and memory safety. Deployed complex microservices architectures on Kubernetes using Docker containers. Implemented real-time data ingestion pipelines using Apache Kafka, connecting multiple distributed nodes. Maintained high-performance PostgreSQL and Cassandra clusters. Systems Developer at Quantum Networks (2016-2019): Developed low-level network protocols and high-throughput APIs. Configured monitoring systems using Prometheus and Grafana. Skills: Rust, Go, Kubernetes, Docker, Kafka, PostgreSQL, Cassandra, Prometheus, Grafana, Linux kernel.",
+      "planted_qualified": true,
+      "planted_reason": "clear match"
+    },
+    {
+      "id": "C04",
+      "name": "Sarah Jenkins",
+      "text": "Professional Summary: Mid-Level Backend Engineer with 5 years of experience building resilient microservices and distributed data pipelines. Passionate about Go, Rust, and cloud infrastructure. Experience: Software Engineer at Horizon Technologies (2021-Present): Developed high-performance backend services using Go and Rust. Managed Kubernetes clusters and Docker containers for seamless deployment. Configured Apache Kafka message brokers for reliable event streaming. Optimized complex queries in PostgreSQL and fine-tuned Cassandra nodes for lower latency. Junior Developer at Alpha Software (2019-2021): Wrote microservices and unit tests. Contributed to CI/CD pipelines. Skills: Go, Rust, Kubernetes, Docker, Kafka, PostgreSQL, Cassandra, AWS, Git.",
+      "planted_qualified": true,
+      "planted_reason": "clear match"
+    },
+    {
+      "id": "C05",
+      "name": "Alexandre Dubois",
+      "text": "Professional Summary: Senior Distributed Systems Engineer with 8 years of experience designing scalable backend architectures. Deep expertise in Go, Kafka, and Kubernetes. Experience: Senior Backend Engineer at CoreStack Labs (2020-Present): Led the migration of legacy monoliths to a distributed microservices architecture using Go. Implemented event-driven patterns with Apache Kafka. Managed large-scale Kubernetes deployments across multiple availability zones using Docker. Tuned PostgreSQL and Cassandra databases for extreme workloads. Software Engineer at Veloce Tech (2016-2020): Built high-throughput APIs and maintained cloud infrastructure. Integrated Prometheus and Grafana for comprehensive system observability. Skills: Go, Kubernetes, Docker, Kafka, PostgreSQL, Cassandra, Prometheus, Grafana, gRPC.",
+      "planted_qualified": true,
+      "planted_reason": "clear match"
+    },
+    {
+      "id": "C06",
+      "name": "Amina Patel",
+      "text": "Professional Summary: Infrastructure and Backend Engineer with 7 years of experience building highly available distributed systems. Note: Resumes using older orchestration tools like Apache Mesos instead of Kubernetes often get filtered out by naive keyword scanners, but my architectural experience with cluster scheduling is directly applicable. Experience: Senior Systems Engineer at Enterprise Cloud Corp (2019-Present): Architected large-scale distributed backends using Go and Rust. Managed container workloads across custom clusters using Apache Mesos and Docker. Implemented event streaming using Apache Kafka. Maintained PostgreSQL and Cassandra databases with strict consistency guarantees. Backend Developer at WebScale Inc (2016-2019): Built APIs and distributed storage layers. Skills: Go, Rust, Apache Mesos, Docker, Kafka, PostgreSQL, Cassandra, Prometheus.",
+      "planted_qualified": true,
+      "planted_reason": "used Mesos not Kubernetes"
+    },
+    {
+      "id": "C07",
+      "name": "Liam O'Connor",
+      "text": "Professional Summary: Backend Software Engineer with 6 years of professional experience building scalable microservices in Go. Note: I took an 18-month caregiving sabbatical in 2022 to support an ailing family member, which is fully reflected in my employment timeline below. Experience: Backend Engineer at SwiftRoute (2023-Present): Building high-throughput microservices using Go and gRPC. Managing Kubernetes and Docker deployments on AWS. Implementing Kafka streaming pipelines. Managing PostgreSQL and Cassandra data stores. Career Break / Caregiving Sabbatical (2021-2022): Took time off to provide full-time care for a family member. Software Developer at DataFlow Systems (2018-2021): Developed RESTful services and backend pipelines in Go. Skills: Go, Kubernetes, Docker, Kafka, PostgreSQL, Cassandra, gRPC.",
+      "planted_qualified": true,
+      "planted_reason": "18-month caregiving gap in 2022, explained in the CV"
+    },
+    {
+      "id": "C08",
+      "name": "Carlos Gomez",
+      "text": "Professional Summary: Systems Engineer with 8 years of experience building resilient backend infrastructure. Note: My prior titles were 'Systems Administrator' and 'Platform Engineer', but my day-to-day work heavily involved writing backend Go code and managing distributed data platforms. Experience: Platform Engineer at CloudCore (2019-Present): Wrote core backend services and automation controllers in Go. Managed Kubernetes clusters, Docker containers, and Apache Kafka brokers. Maintained PostgreSQL and Cassandra databases. Systems Engineer at Infrastructure Solutions (2015-2019): Managed Linux systems, wrote internal tooling in Python and Go, and configured monitoring. Skills: Go, Kubernetes, Docker, Kafka, PostgreSQL, Cassandra, Linux, Bash.",
+      "planted_qualified": true,
+      "planted_reason": "titles predated current backend buzzwords, but experience is valid"
+    },
+    {
+      "id": "C09",
+      "name": "Hana Takahashi",
+      "text": "Professional Summary: Backend Developer with 6 years of experience building distributed systems. Note: Instead of Kubernetes, my recent teams utilized Nomad and self-hosted ECS for container orchestration, but container lifecycle management and scaling principles remain identical. Experience: Backend Engineer at HyperScale Systems (2020-Present): Designed distributed microservices using Rust and Go. Deployed and scaled applications using HashiCorp Nomad and Docker. Built real-time streaming architectures with Apache Kafka. Managed PostgreSQL and Cassandra databases. Software Engineer at TechnoSoft (2017-2020): Developed backend APIs and database integrations. Skills: Rust, Go, Nomad, Docker, Kafka, PostgreSQL, Cassandra.",
+      "planted_qualified": true,
+      "planted_reason": "used Nomad instead of Kubernetes"
+    },
+    {
+      "id": "C10",
+      "name": "Jordan Smith",
+      "text": "Professional Summary: Backend Software Engineer with 5 years of experience in high-performance computing and data engineering. Note: I transitioned into tech from a background in quantitative finance and applied mathematics in 2019, bringing strong analytical and systems programming skills. Experience: Backend Engineer at FinTech Distributed (2020-Present): Developed low-latency trading microservices in C++ and Go. Deployed workloads on Kubernetes and Docker. Utilized Kafka for financial data streaming. Maintained PostgreSQL and Cassandra databases. Quantitative Developer at QuantFund (2017-2019): Built mathematical models and data processing scripts. Skills: Go, C++, Kubernetes, Docker, Kafka, PostgreSQL, Cassandra, Mathematics.",
+      "planted_qualified": true,
+      "planted_reason": "career-changer from quantitative finance with strong technical overlap"
+    },
+    {
+      "id": "C11",
+      "name": "Rachel Green",
+      "text": "Professional Summary: Frontend Engineer with 4 years of experience building responsive web applications and user interfaces using React and TypeScript. Experience: Frontend Developer at WebSolutions (2020-Present): Developed single-page applications using React, Redux, and TypeScript. Collaborated with backend teams to integrate REST APIs. Optimized web performance and accessibility. Junior Frontend Developer at StartupHub (2019-2020): Built landing pages and UI components with HTML, CSS, and JavaScript. Skills: JavaScript, TypeScript, React, HTML, CSS, Git, UI/UX.",
+      "planted_qualified": false,
+      "planted_reason": "pure frontend engineer with no backend or distributed systems experience"
+    },
+    {
+      "id": "C12",
+      "name": "Kevin Brody",
+      "text": "Professional Summary: Junior Java Developer with 1 year of experience building small web applications and internal tools. Experience: Junior Developer at Enterprise Apps (2023-Present): Wrote basic CRUD applications using Java Spring Boot. Fixed minor bugs in legacy SQL databases. Wrote unit tests using JUnit. Skills: Java, Spring Boot, SQL, Git, Maven.",
+      "planted_qualified": false,
+      "planted_reason": "insufficient seniority (1 year) and wrong technology stack (Java/Spring instead of Go/Rust/Kubernetes)"
+    },
+    {
+      "id": "C13",
+      "name": "Zoe Wang",
+      "text": "Professional Summary: Product Manager with 6 years of experience leading agile software development teams and defining product roadmaps for SaaS products. Experience: Senior Product Manager at SaaSify (2021-Present): Defined feature requirements, managed backlogs, and coordinated cross-functional engineering teams for cloud products. Product Manager at TechGrowth (2018-2021): Conducted user research and managed go-to-market strategies. Skills: Agile, Product Management, Roadmapping, Jira, Scrum, User Research.",
+      "planted_qualified": false,
+      "planted_reason": "non-technical product management role with no software engineering experience"
+    },
+    {
+      "id": "C14",
+      "name": "Brian Taylor",
+      "text": "Professional Summary: IT Support Specialist with 4 years of experience providing technical support, troubleshooting hardware and software issues, and managing office networks. Experience: IT Support Technician at OfficeNet (2020-Present): Resolved hardware, printer, and network connectivity issues for 200+ employees. Managed Active Directory user accounts and laptop provisioning. Help Desk Analyst at TechHelp (2019-2020): Answered support tickets and troubleshot Windows/Mac OS environments. Skills: Active Directory, Network Troubleshooting, Hardware Support, Customer Service, Windows, macOS.",
+      "planted_qualified": false,
+      "planted_reason": "IT support background with no software engineering or distributed systems experience"
+    },
+    {
+      "id": "C15",
+      "name": "Samantha Cruz",
+      "text": "Professional Summary: Marketing Specialist and Technical Enthusiast. I have read a lot about Kubernetes, Docker, and Kafka, and I am very passionate about backend engineering and distributed systems! Experience: Marketing Coordinator at BrandGrow (2021-Present): Managed digital marketing campaigns, social media channels, and content creation. Created newsletters and tracked campaign analytics. Skills: Digital Marketing, SEO, Content Creation, Kubernetes (basic knowledge), Docker (read about it), Kafka (hobbyist).",
+      "planted_qualified": false,
+      "planted_reason": "false positive trap: mentions buzzwords like Kubernetes and Kafka in skills/summary but has zero professional engineering experience"
+    },
+    {
+      "id": "C16",
+      "name": "Vikram Malhotra",
+      "text": "Professional Summary: Graphic Designer and UI/UX consultant with 5 years of experience designing mobile apps and brand identities. I occasionally touch HTML and CSS. Experience: Lead UI/UX Designer at CreativeStudio (2019-Present): Designed wireframes, prototypes, and final visual assets for iOS and Android apps using Figma and Sketch. Freelance Designer (2017-2019): Delivered branding and web design packages for small businesses. Skills: Figma, Sketch, UI/UX Design, Wireframing, Prototyping, HTML, CSS.",
+      "planted_qualified": false,
+      "planted_reason": "false positive trap: creative designer with no backend architecture or systems engineering background"
+    }
+  ]
+}

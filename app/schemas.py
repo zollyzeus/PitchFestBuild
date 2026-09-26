@@ -65,6 +65,9 @@ class BaselineResult(BaseModel):
     candidate_id: str
     passed: bool
     fired_rules: list[str] = Field(default_factory=list)
+    # Structured ids of the must-have requirements that rejected this candidate,
+    # so the pattern report can aggregate per rule without parsing strings.
+    fired_req_ids: list[str] = Field(default_factory=list)
 
 
 class Dataset(BaseModel):

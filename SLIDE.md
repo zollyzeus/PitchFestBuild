@@ -25,7 +25,7 @@ Keyword-matching ATS software rejects real, qualified candidates whose experienc
 - Runs entirely on a laptop with no GPU (Gemini API for reasoning, no local model).
 - Structured output via `response_schema` (Pydantic) — zero JSON-parsing fragility.
 - Disk cache by content hash so a live demo never re-pays for or re-waits on an already-seen (rubric, candidate) pair.
-- Live eval on this run: **5/7 (71%) hard-rescue recall, 0/6 false rescues, 100% grounding rate** on claimed evidence.
+- Live eval on the synthetic demo pool (n=16, small): **5/7 (71%) hard-rescue recall, 0/6 false rescues, 66/67 (99%) claimed quotes verified in the CV text.** Reproducible: temperature 0, 112/112 verdicts identical across independent runs.
 
 **What we'd build next**
 - Live ATS connectors (Greenhouse/Lever/Workday) to re-screen real rejection queues.
@@ -33,4 +33,4 @@ Keyword-matching ATS software rejects real, qualified candidates whose experienc
 - Baton: an AI interviewer that captures a departing expert's undocumented knowledge before they leave — the enterprise-side sequel to this problem, fully scoped but not built today (one builder, one deadline).
 
 **Assumptions stated up front**
-Synthetic data only · CVs as plain text (no PDF/DOCX parsing yet) · recommends a human second review, never auto-decides · bias flags are signals, not a legal audit.
+Synthetic data only · PDF/DOCX/TXT CVs supported (text-based; scanned PDFs are skipped, no OCR) · small evaluation (n=16) · recommends a human second review, never auto-decides · bias flags are signals, not a legal audit.

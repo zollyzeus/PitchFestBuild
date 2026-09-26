@@ -1,6 +1,6 @@
 """Second Look -- Streamlit demo UI.
 
-Run with:  .venv/bin/streamlit run app/app.py
+Run with:  .venv/bin/streamlit run ui.py
 """
 from __future__ import annotations
 
@@ -14,7 +14,15 @@ from app.envload import load_dotenv
 load_dotenv()
 
 from app.data_gen import DATASET_PATH, generate_dataset  # noqa: E402
-from app.pipeline import eval_metrics, run_all  # noqa: E402
+from app.ingest import SUPPORTED_EXTENSIONS, candidates_from_uploads  # noqa: E402
+from app.pipeline import (  # noqa: E402
+    eval_metrics,
+    pattern_report,
+    rescued_bias_summary,
+    results_to_csv,
+    run_all,
+)
+from app.rubric_edit import rows_to_rubric, rubric_signature, rubric_to_rows  # noqa: E402
 from app.rubric_extract import extract_rubric  # noqa: E402
 from app.schemas import Candidate, Rubric  # noqa: E402
 
@@ -56,11 +64,45 @@ with st.sidebar:
             st.session_state["results"] = None
         st.success(f"Generated {len(ds.candidates)} candidates.")
 
-    n = len(st.session_state["candidates"])
-    st.metric("Candidates loaded", n)
-    if n == 0:
+    demo_pool: list[Candidate] = st.session_state["candidates"]
+
+    st.divider()
+    st.header("Or upload CVs")
+    st.caption(
+        "PDF, DOCX or TXT. Hackathon rule: synthetic or public CVs only — "
+        "no real personal data."
+    )
+    uploads = st.file_uploader(
+        "CV files", type=list(SUPPORTED_EXTENSIONS), accept_multiple_files=True,
+        label_visibility="collapsed",
+    )
+    parsed: list[Candidate] = []
+    if uploads:
+        parsed, upload_warnings = candidates_from_uploads([(f.name, f.getvalue()) for f in uploads])
+        for w in upload_warnings:
+            st.warning(w)
+    active_pool = demo_pool
+    if parsed:
+        choice = st.radio(
+            "Screen which pool?",
+            [f"Uploaded CVs ({len(parsed)})", f"Demo pool ({len(demo_pool)})"],
+            index=0,
+        )
+        if choice.startswith("Uploaded"):
+            active_pool = parsed
+
+    # A different pool invalidates any previous results.
+    pool_sig = tuple((c.id, len(c.text)) for c in active_pool)
+    if st.session_state.get("pool_sig") != pool_sig:
+        st.session_state["pool_sig"] = pool_sig
+        st.session_state["results"] = None
+    st.session_state["active_candidates"] = active_pool
+
+    st.divider()
+    st.metric("Candidates loaded", len(active_pool))
+    if not active_pool:
         st.warning(
-            "No dataset yet. Click the button above, or run "
+            "No candidates yet. Regenerate the demo dataset above, upload CVs, or run "
             "`.venv/bin/python -m app.data_gen` from a terminal."
         )
 
@@ -84,17 +126,49 @@ if extract_clicked:
     except Exception as e:  # noqa: BLE001
         st.error(f"Rubric extraction failed (API hiccup) — try the button again. Detail: {e}")
 
-rubric: Rubric | None = st.session_state["rubric"]
+extracted_rubric: Rubric | None = st.session_state["rubric"]
+rubric: Rubric | None = extracted_rubric
 
-if rubric:
+if extracted_rubric:
     st.subheader("2. Rubric (editable)")
-    for req in rubric.requirements:
-        with st.expander(f"{req.id} [{req.type}, w={req.weight}] {req.text}"):
-            st.write(f"**Keywords (what a keyword ATS looks for):** {', '.join(req.keywords) or '-'}")
-            st.write(f"**Equivalents (transferable, ATS misses these):** {', '.join(req.equivalents) or '-'}")
+    st.caption(
+        "Edit any cell, then re-run. **keywords** drive the keyword-ATS baseline (add one and "
+        "watch the ATS shortlist change); **equivalents**, **type** and **weight** drive Second Look."
+    )
+    edited_rows = st.data_editor(
+        rubric_to_rows(extracted_rubric),
+        # A new extracted rubric gets a fresh editor instead of inheriting stale edits.
+        key=f"rubric_editor_{rubric_signature(extracted_rubric)}",
+        hide_index=True,
+        width="stretch",
+        num_rows="fixed",
+        disabled=["id"],
+        column_config={
+            "requirement": st.column_config.TextColumn("requirement", width="large"),
+            "type": st.column_config.SelectboxColumn("type", options=["must", "nice"], required=True),
+            "weight": st.column_config.NumberColumn("weight", min_value=1, max_value=5, step=1, required=True),
+            "keywords": st.column_config.TextColumn(
+                "keywords (ATS)", help="Comma-separated. What a keyword ATS scans for.", width="large"
+            ),
+            "equivalents": st.column_config.TextColumn(
+                "equivalents (transferable)",
+                help="Comma-separated. Skills/tools that satisfy it but use different words.",
+                width="large",
+            ),
+        },
+    )
+    # `rubric` from here on is the EDITED rubric; that is what gets screened.
+    rubric = rows_to_rubric(extracted_rubric, list(edited_rows))
 
     st.subheader("3. Run screening")
-    candidates: list[Candidate] = st.session_state["candidates"]
+    anonymize = st.checkbox(
+        "Anonymized review — hide names, contact details and dates/years from the model",
+        value=False,
+        help="Best-effort scrub of the text the AI sees (the ATS baseline is unchanged). "
+        "Free text can still carry identifying details, so this is not a guarantee. "
+        "Bias signals that depend on dates can't be detected in this mode; ones stated in the CV's own words still can.",
+    )
+    candidates: list[Candidate] = st.session_state["active_candidates"]
     run_disabled = not candidates
     if st.button("Run Second Look on all candidates", disabled=run_disabled, type="primary"):
         progress = st.progress(0.0, text="Scoring candidates...")
@@ -104,8 +178,9 @@ if rubric:
 
         try:
             with st.spinner("Running baseline + Second Look scoring..."):
-                results = run_all(candidates, rubric, progress_cb=_cb)
+                results = run_all(candidates, rubric, progress_cb=_cb, anonymize=anonymize)
             st.session_state["results"] = results
+            st.session_state["results_rubric_sig"] = f"{rubric_signature(rubric)}|anon={anonymize}"
         except Exception as e:  # noqa: BLE001
             st.error(f"Scoring hit an API hiccup partway through — click Run again "
                      f"(cached candidates won't re-cost quota). Detail: {e}")
@@ -113,9 +188,12 @@ if rubric:
             progress.empty()
 
     results = st.session_state["results"]
+    if results and st.session_state.get("results_rubric_sig") != f"{rubric_signature(rubric)}|anon={anonymize}":
+        st.info("The rubric or anonymization setting changed after the last run — click **Run Second Look** again to re-screen.")
+        results = None
     if results:
         baseline_pass = [r for r in results if r.baseline.passed]
-        ai_pass = [r for r in results if r.rescued or (r.baseline.passed and r.score.fit_score >= 0.6)]
+        ai_pass = [r for r in results if r.shortlisted]
         rescued = [r for r in results if r.rescued]
 
         m = eval_metrics(results)
@@ -144,7 +222,36 @@ if rubric:
                 badge = " 🟢 RESCUED" if r.rescued else ""
                 st.write(f"- **{r.candidate.name}** ({r.candidate.id}) — fit {r.score.fit_score:.2f}{badge}")
 
-        st.subheader("5. Candidate detail")
+        st.download_button(
+            "Download full results (CSV)",
+            data=results_to_csv(results),
+            file_name="second_look_results.csv",
+            mime="text/csv",
+        )
+
+        st.subheader("5. Rejection pattern report")
+        st.caption(
+            "Which keyword rule is silently removing candidates, and how many of them "
+            "Second Look found to be genuinely qualified."
+        )
+        report_rows = pattern_report(results, rubric)
+        if report_rows:
+            st.dataframe(report_rows, width="stretch", hide_index=True)
+            top = report_rows[0]
+            st.warning(
+                f"Rule **{top['rule']}** alone rejected {top['rejected_by_rule']} candidates; "
+                f"Second Look rescued {top['rescued_by_second_look']} of them."
+            )
+        else:
+            st.write("The keyword baseline rejected no one on this rubric.")
+        bias_summary = rescued_bias_summary(results)
+        if bias_summary:
+            st.write(
+                "**Bias signals flagged among rescued candidates:** "
+                + ", ".join(f"`{k}` × {v}" for k, v in bias_summary.items())
+            )
+
+        st.subheader("6. Candidate detail")
         by_id = {r.candidate.id: r for r in results}
         pick = st.selectbox(
             "Choose a candidate",

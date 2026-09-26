@@ -1,5 +1,7 @@
 # PitchFest Build — Planning Docs
 
+> **Actual implementation status and measured results live in [../RUN.md](../RUN.md).** The specs below are the original plans; F1–F11 of Second Look are now built (F9 export is CSV-only, F10 anonymization is best-effort).
+
 **One person is building this.** A solo builder cannot take both ideas below to a demoable state in a single ~8-hour day, so the plan is to commit fully to **Second Look** and treat **Baton** as the fully-scoped next problem (mentioned as "what we'd build next" on the slide), not something built today.
 
 | Doc | Idea | Status | One-line pitch |

@@ -24,8 +24,8 @@ def _rubric_as_text(rubric: Rubric) -> str:
     return "\n".join(lines)
 
 
-def _system_prompt(rubric: Rubric) -> str:
-    return f"""\
+def _system_prompt(rubric: Rubric, anonymized: bool = False) -> str:
+    base = f"""\
 You are an evidence-based CV reviewer. Your job is to rescue qualified candidates that a \
 blunt keyword ATS would wrongly reject, WITHOUT inventing anything.
 
@@ -47,21 +47,32 @@ age-coded phrasing -- each with the exact evidence span and, if the CV itself ex
 - "interview_questions": exactly 3 short, specific questions a recruiter should ask THIS \
 candidate, targeting whichever requirements came back partial, not_met, or low-confidence.
 """
+    if anonymized:
+        base += """
+This CV has been ANONYMIZED. Tokens such as [NAME], [YEAR], [DATE], [EMAIL], [PHONE] and \
+[URL] are deliberate redactions, not part of the candidate's writing. Never mention them, \
+never treat them as evidence of anything, and never report them as bias signals. Only report \
+a bias signal when the CV's own words describe it (for example a stated career break or a \
+non-linear career path); you cannot assess dates, so do not try.
+"""
+    return base
 
 
-def score_candidate(rubric: Rubric, candidate: Candidate) -> CandidateScore:
+def score_candidate(rubric: Rubric, candidate: Candidate, anonymized: bool = False) -> CandidateScore:
     raw: RawCandidateScore = get_or_compute(
         "score",
         RawCandidateScore,
         lambda: call_structured(
             model=MODEL_FAST,
-            system=_system_prompt(rubric),
+            system=_system_prompt(rubric, anonymized),
             user_content=candidate.text,
             response_schema=RawCandidateScore,
+            deterministic=True,
         ),
         rubric.model_dump_json(),
         candidate.id,
         candidate.text,
+        "anonymized" if anonymized else "full",
     )
     return CandidateScore(
         candidate_id=candidate.id,

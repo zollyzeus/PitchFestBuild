@@ -7,7 +7,10 @@ Model choice (checked live against this project's key on 2026-09-26):
 """
 from __future__ import annotations
 
+import collections
 import os
+import re
+import threading
 import time
 
 from google import genai
@@ -21,6 +24,27 @@ MODEL_REASONING = os.environ.get("GEMINI_MODEL_REASONING", "gemini-flash-lite-la
 MODEL_FAST = os.environ.get("GEMINI_MODEL_FAST", "gemini-flash-lite-latest")
 
 _client: genai.Client | None = None
+
+# The API key is on Gemini's free tier: 15 requests/minute per model. A fresh (uncached)
+# screening is 1 rubric call + 1 call per candidate, so we throttle ourselves below that
+# limit instead of hammering the API and burning quota on retries.
+MAX_RPM = int(os.environ.get("GEMINI_MAX_RPM", "12"))
+_call_times: collections.deque[float] = collections.deque()
+_throttle_lock = threading.Lock()
+
+
+def _throttle() -> None:
+    """Block until making one more call keeps us within MAX_RPM over a sliding minute."""
+    while True:
+        with _throttle_lock:
+            now = time.monotonic()
+            while _call_times and now - _call_times[0] > 60:
+                _call_times.popleft()
+            if len(_call_times) < MAX_RPM:
+                _call_times.append(now)
+                return
+            wait = 60 - (now - _call_times[0]) + 0.2
+        time.sleep(max(wait, 0.2))
 
 
 def get_client() -> genai.Client:
@@ -43,12 +67,17 @@ def call_structured(
     user_content: str,
     response_schema: type[BaseModel],
     max_retries: int = 6,
+    deterministic: bool = False,
 ) -> BaseModel:
     """One Gemini call, JSON-mode + a Pydantic response_schema, with backoff on
     transient errors (503 overload, 429 rate limit). Raises on the final failure."""
     client = get_client()
     last_err: Exception | None = None
+    # Scoring/extraction must be reproducible for an audit trail: same input, same
+    # verdicts. Dataset generation wants variety, so it leaves this off.
+    extra = {"temperature": 0.0, "seed": 0} if deterministic else {}
     for attempt in range(max_retries):
+        _throttle()
         try:
             resp = client.models.generate_content(
                 model=model,
@@ -57,6 +86,7 @@ def call_structured(
                     system_instruction=system,
                     response_mime_type="application/json",
                     response_schema=response_schema,
+                    **extra,
                 ),
             )
             if resp.parsed is not None:
@@ -67,8 +97,14 @@ def call_structured(
         except Exception as e:  # noqa: BLE001 - we want to retry broadly, then surface
             last_err = e
             msg = str(e)
-            transient = ("503" in msg) or ("UNAVAILABLE" in msg) or ("429" in msg)
+            rate_limited = "429" in msg or "RESOURCE_EXHAUSTED" in msg
+            transient = rate_limited or ("503" in msg) or ("UNAVAILABLE" in msg)
             if not transient or attempt == max_retries - 1:
                 raise
-            time.sleep(1.5 * (attempt + 1))
+            if rate_limited:
+                # Honor the server's own hint ("Please retry in 16.3s"), don't guess.
+                m = re.search(r"retry in ([\d.]+)s", msg)
+                time.sleep((float(m.group(1)) if m else 20.0) + 1.0)
+            else:
+                time.sleep(1.5 * (attempt + 1))
     raise last_err  # pragma: no cover - unreachable, satisfies type checkers
