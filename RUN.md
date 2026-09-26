@@ -47,6 +47,17 @@ Tested (real API calls, n small):
 - **Not comparable to the headline numbers.** 71% / 0 / 99% were measured *without* instructions. Instructions are a strong lever and can inflate results if written to fit the candidates. Don't quote with-instruction numbers as the tool's accuracy.
 - Empty instructions leave the prompt and cache key unchanged, so warmed results stay valid.
 
+## Groq fallback (tested live, works)
+If Gemini fails for any reason (quota, outage), the app now retries once against **Groq** (`openai/gpt-oss-120b`, OpenAI-compatible API) before giving up, using `GROQ_API_KEY` in `.env`. No code changes needed elsewhere -- `call_structured()` handles it transparently.
+
+**Tested by forcing a real Gemini failure** (bogus model name) and running the actual app code, not a toy example:
+- Rubric extraction: 6 requirements, correctly typed/weighted, via Groq.
+- Candidate scoring: verdicts + verbatim quotes via Groq, all code-level grounded (quotes really are in the CV text).
+- Full pipeline (grounding + fit score + shortlist decision) works unmodified on Groq-sourced results.
+- **Zero regression:** with no forced failure, the real Gemini path still runs, and the cached demo pool still returns instantly with the exact same 71% / 0 / 99%.
+
+**One caveat, not fixed (documented instead, given the time left):** a Groq-sourced result is cached under the *same* key a Gemini result would use. So if Gemini fails, Groq answers, and Gemini later recovers, re-running that *exact* (rubric, candidate) pair will keep serving the old Groq answer instead of retrying Gemini. Only matters if you hit a real Gemini outage during the event and then want to force a redo after it clears -- if so, delete the specific file(s) in `data/cache/` (or the whole folder) to force a fresh call.
+
 ## API quota: the free tier ran out today (read this before the demo)
 On 2026-09-26 the key hit **`GenerateRequestsPerDayPerProjectPerModel-FreeTier`: 500 requests/day for the default model**, shared by everything using the key (Relook and the Baton window). Consequences:
 - **Cached work still runs instantly:** the demo pool, the demo JD, and anything already scored. Warmed results are untouched (verified: 0 API calls, same 5/7 and 0/6).
