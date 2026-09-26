@@ -8,6 +8,7 @@ from pathlib import Path
 from baton.kt_models import ANGLE_WEIGHT, STATUS_LABEL, KTRecord
 
 KT_DIR = Path("data/kt")
+SEED_DIR = Path(__file__).parent / "seed_kt"  # the 5 canonical demo KTs, bundled with the code
 ACTION_DAYS = 2  # days an owner has to respond to an action item
 ACTIVE_ACTION_STATES = ("action_items", "open_redress")
 
@@ -101,6 +102,21 @@ def row(rec: KTRecord) -> dict:
         "Readiness": f"{readiness(rec):.0%}" if rec.assessments else "-",
         "In stage (days)": time_in_stage_days(rec),
     }
+
+
+def reset_to_seed() -> int:
+    """Delete every current KT and restore the bundled demo set (baton/seed_kt/), so the
+    tracker returns to a known state without leaving the app. Returns how many were restored."""
+    if KT_DIR.exists():
+        for f in KT_DIR.glob("*.json"):
+            f.unlink()
+    KT_DIR.mkdir(parents=True, exist_ok=True)
+    n = 0
+    if SEED_DIR.exists():
+        for f in SEED_DIR.glob("*.json"):
+            (KT_DIR / f.name).write_text(f.read_text())
+            n += 1
+    return n
 
 
 def action_rows(recs: list[KTRecord]) -> list[dict]:

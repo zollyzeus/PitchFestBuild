@@ -1,10 +1,12 @@
-"""One-pager PPTX for the Baton pitch: concept, AI role, business value."""
+"""One-pager PPTX for the Baton pitch: concept, workflow, AI role, business value.
+
+Single slide (previously split as overview + workflow-detail across two slides;
+consolidated here so the submission deck carries one Baton slide, not two)."""
 from pptx import Presentation
-from pptx.util import Inches, Pt, Emu
+from pptx.util import Inches, Pt
 from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 from pptx.enum.shapes import MSO_SHAPE
-from pptx.oxml.ns import qn
 
 # ---- palette ----
 NAVY = RGBColor(0x1B, 0x23, 0x40)
@@ -68,7 +70,7 @@ def add_text(x, y, w, h, text, size, color, bold=False, italic=False, font=BODY_
     return box
 
 
-def add_bullets(x, y, w, h, items, size, color, font=BODY_FONT, space_after=6):
+def add_bullets(x, y, w, h, items, size, color, font=BODY_FONT, space_after=5, line_spacing=1.04):
     box = slide.shapes.add_textbox(Inches(x), Inches(y), Inches(w), Inches(h))
     tf = box.text_frame
     tf.word_wrap = True
@@ -79,7 +81,7 @@ def add_bullets(x, y, w, h, items, size, color, font=BODY_FONT, space_after=6):
     for i, item in enumerate(items):
         p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
         p.alignment = PP_ALIGN.LEFT
-        p.line_spacing = 1.08
+        p.line_spacing = line_spacing
         p.space_after = Pt(space_after)
         r_bullet = p.add_run()
         r_bullet.text = "●  "
@@ -96,16 +98,15 @@ def add_bullets(x, y, w, h, items, size, color, font=BODY_FONT, space_after=6):
 
 
 # ---------------------------------------------------------------- header
-header = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0), Inches(0), Inches(SW), Inches(1.35))
+header = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0), Inches(0), Inches(SW), Inches(0.95))
 solid(header, NAVY)
 header.shadow.inherit = False
 
-add_text(0.5, 0.20, 8.6, 0.62, "Baton", 34, WHITE, bold=True, font=HEAD_FONT)
-add_text(0.5, 0.82, 8.6, 0.42,
-         "Knowledge transfer you can prove is complete",
-         15, NAVY_SOFT, italic=True, font=BODY_FONT)
+add_text(0.5, 0.13, 8.6, 0.5, "Baton", 28, WHITE, bold=True, font=HEAD_FONT)
+add_text(0.5, 0.62, 8.6, 0.3, "Knowledge transfer you can prove is complete", 13, NAVY_SOFT,
+         italic=True, font=BODY_FONT)
 
-badge = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(10.15), Inches(0.36), Inches(2.68), Inches(0.62))
+badge = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(10.35), Inches(0.20), Inches(2.48), Inches(0.56))
 solid(badge, AMBER)
 set_round_radius(badge, 0.5)
 badge.shadow.inherit = False
@@ -120,7 +121,7 @@ p1 = btf.paragraphs[0]
 p1.alignment = PP_ALIGN.CENTER
 r1 = p1.add_run()
 r1.text = "PITCHFEST 2026"
-r1.font.size = Pt(11)
+r1.font.size = Pt(10)
 r1.font.bold = True
 r1.font.name = BODY_FONT
 r1.font.color.rgb = NAVY
@@ -129,14 +130,14 @@ p2.alignment = PP_ALIGN.CENTER
 p2.space_before = Pt(0)
 r2 = p2.add_run()
 r2.text = "ENTERPRISE AI TRACK"
-r2.font.size = Pt(9)
+r2.font.size = Pt(8)
 r2.font.bold = True
 r2.font.name = BODY_FONT
 r2.font.color.rgb = NAVY
 
 # ---------------------------------------------------------------- three columns
-COL_Y = 1.65
-COL_H = 4.85
+COL_Y = 1.10
+COL_H = 4.05
 COL_W = 3.9
 GAP = 0.3
 COL_X = [0.5, 0.5 + COL_W + GAP, 0.5 + 2 * (COL_W + GAP)]
@@ -153,8 +154,8 @@ def card(cx):
 
 
 def badge_circle(cx, number):
-    d = 0.6
-    oval = slide.shapes.add_shape(MSO_SHAPE.OVAL, Inches(cx + 0.3), Inches(COL_Y + 0.3), Inches(d), Inches(d))
+    d = 0.52
+    oval = slide.shapes.add_shape(MSO_SHAPE.OVAL, Inches(cx + 0.26), Inches(COL_Y + 0.26), Inches(d), Inches(d))
     solid(oval, NAVY)
     oval.shadow.inherit = False
     tf = oval.text_frame
@@ -168,7 +169,7 @@ def badge_circle(cx, number):
     p.alignment = PP_ALIGN.CENTER
     r = p.add_run()
     r.text = str(number)
-    r.font.size = Pt(22)
+    r.font.size = Pt(19)
     r.font.bold = True
     r.font.color.rgb = WHITE
     r.font.name = BODY_FONT
@@ -177,134 +178,94 @@ def badge_circle(cx, number):
 for i, cx in enumerate(COL_X):
     card(cx)
     badge_circle(cx, i + 1)
-    add_text(cx + 1.05, COL_Y + 0.30, COL_W - 1.35, 0.6, titles[i], 19, NAVY, bold=True,
+    add_text(cx + 0.92, COL_Y + 0.26, COL_W - 1.2, 0.52, titles[i], 16.5, NAVY, bold=True,
               font=BODY_FONT, anchor=MSO_ANCHOR.MIDDLE)
 
 # --- column 1: the problem
 add_bullets(
-    COL_X[0] + 0.3, COL_Y + 1.15, COL_W - 0.6, COL_H - 1.45,
+    COL_X[0] + 0.28, COL_Y + 0.98, COL_W - 0.56, COL_H - 1.2,
     [
-        "KT is a meeting and a checklist: the giver believes they explained, the taker believes they understood",
-        "Nobody tests whether the two accounts match",
+        "KT is a meeting and a checklist: nobody tests whether the giver and taker actually agree",
         "Gaps surface months later as incidents and slow ramp-up",
-        "Project managers cannot see KT status, blockers or who is holding it up",
+        "Project managers can't see KT status, blockers, or who is holding it up",
     ],
-    14, NAVY,
+    13, NAVY,
 )
 
-# --- column 2: how AI does it
+# --- column 2: how AI does it (workflow + AI/code/human roles, condensed)
 add_bullets(
-    COL_X[1] + 0.3, COL_Y + 1.15, COL_W - 0.6, COL_H - 1.45,
+    COL_X[1] + 0.28, COL_Y + 0.98, COL_W - 0.56, COL_H - 1.2,
     [
-        "PM enters project, roles, stack, dev/test environments and duration",
-        "AI writes tailored questions across 12 KT angles, separately for giver and taker",
-        "Answers are recorded independently, then compared for gaps and mismatches",
-        "Gaps become action items for giver or taker; their responses are reviewed",
-        "Code decides: close, keep open for redress, or escalate",
+        "AI asks giver and taker separately; round 2 follows up on weak angles only",
+        "Code verifies quotes and scores readiness against the manager's target",
+        "AI recommends and reviews action items; code decides close / redress / escalate",
+        "Full audit trail: every question, answer, action and decision is logged",
     ],
-    13.5, NAVY,
+    12.5, NAVY,
 )
 
 # --- column 3: business value (stats row + bullets)
-STAT_Y = COL_Y + 1.15
-stat_w = (COL_W - 0.6 - 2 * 0.15) / 3
+STAT_Y = COL_Y + 0.98
+stat_w = (COL_W - 0.56 - 2 * 0.12) / 3
 stats = [("4/4", "planted gaps\ndetected"), ("97%", "final readiness,\nup from 57%"), ("0/8", "false alarms on\nsound angles")]
 for j, (num, cap) in enumerate(stats):
-    sx = COL_X[2] + 0.3 + j * (stat_w + 0.15)
-    add_text(sx, STAT_Y, stat_w, 0.55, num, 26, AMBER, bold=True, font=HEAD_FONT,
+    sx = COL_X[2] + 0.28 + j * (stat_w + 0.12)
+    add_text(sx, STAT_Y, stat_w, 0.46, num, 21, AMBER, bold=True, font=HEAD_FONT,
               align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.BOTTOM)
-    add_text(sx, STAT_Y + 0.55, stat_w, 0.5, cap, 9.5, MUTED, font=BODY_FONT,
-              align=PP_ALIGN.CENTER)
+    add_text(sx, STAT_Y + 0.46, stat_w, 0.42, cap, 8.5, MUTED, font=BODY_FONT,
+              align=PP_ALIGN.CENTER, line_spacing=1.0)
 
 add_bullets(
-    COL_X[2] + 0.3, STAT_Y + 1.25, COL_W - 0.6, COL_H - (1.25 + STAT_Y - COL_Y) - 0.3,
+    COL_X[2] + 0.28, STAT_Y + 1.02, COL_W - 0.56, COL_H - (1.02 + STAT_Y - COL_Y) - 0.15,
     [
         "KT closes on evidence, not on a signed checklist",
         "Manager tracker: stage, day n of N, deadline, who each item waits on",
-        "Full audit trail of questions, answers, actions and the decision",
+        "Turns a KT into an auditable, escalation-ready workflow",
     ],
-    14, NAVY,
+    13, NAVY,
 )
 
-# ---------------------------------------------------------------- footer
-add_text(
-    0.5, 6.85, 12.333, 0.4,
-    "Stack: Python · Streamlit · Google Gemini (structured output) · simulated giver and taker personas, one run, synthetic project · no GPU needed",
-    10.5, MUTED, italic=True, font=BODY_FONT, align=PP_ALIGN.CENTER,
-)
-
-
-# ================================================================ slide 2: workflow
-slide = prs.slides.add_slide(prs.slide_layouts[6])
-hdr = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0), Inches(0), Inches(SW), Inches(1.0))
-solid(hdr, NAVY)
-hdr.shadow.inherit = False
-add_text(0.5, 0.12, 12.3, 0.5, "Baton workflow: from project brief to a closed, evidenced KT", 26, WHITE, bold=True, font=HEAD_FONT)
-add_text(0.5, 0.63, 12.3, 0.3, "Independent giver and taker Q&A, gap assessment, action items, review, and a decision the manager can track",
-         13, NAVY_SOFT, italic=True)
-
+# ---------------------------------------------------------------- 6-step workflow strip
 flow = [
-    ("1 Brief", "PM enters project, roles, tech stack, dev/test env, duration, extra prompts"),
-    ("2 Q&A", "Giver and taker answer separately. Round 1: 12 angles. Round 2: follow-ups on weak angles"),
-    ("3 Assess", "AI compares both sides per angle; quotes verified in code; readiness scored"),
-    ("4 Actions", "Gaps become action items for giver or taker; each replies with proof or a justification to ignore"),
-    ("5 Review", "AI reviews responses; vague or weak justifications are rejected with a reason"),
-    ("6 Decide", "Code rule: Close, keep open for one redress round, or Escalate to manager"),
+    ("1 Brief", "PM enters project, roles, stack, dev/test env, duration"),
+    ("2 Q&A", "Giver & taker answer independently across 12 KT angles"),
+    ("3 Assess", "AI compares both sides; quotes verified in code"),
+    ("4 Actions", "Gaps become owned action items, with proof or justification"),
+    ("5 Review", "AI reviews responses; weak justifications rejected"),
+    ("6 Decide", "Code: Close, one redress round, or Escalate"),
 ]
 FN = len(flow)
-FG = 0.14
+FG = 0.13
 FW = (12.333 - (FN - 1) * FG) / FN
-FY, FH = 1.22, 2.05
+FY, FH = COL_Y + COL_H + 0.13, 1.00
 for i, (t, d) in enumerate(flow):
     fx = 0.5 + i * (FW + FG)
     r = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(fx), Inches(FY), Inches(FW), Inches(FH))
     solid(r, CARD_BG)
-    set_round_radius(r, 0.05)
+    set_round_radius(r, 0.06)
     r.shadow.inherit = False
-    bar = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(fx), Inches(FY), Inches(FW), Inches(0.42))
+    bar = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(fx), Inches(FY), Inches(FW), Inches(0.32))
     solid(bar, NAVY if i < FN - 1 else AMBER)
     bar.shadow.inherit = False
-    add_text(fx + 0.12, FY + 0.04, FW - 0.2, 0.34, t, 13, WHITE if i < FN - 1 else NAVY, bold=True, anchor=MSO_ANCHOR.MIDDLE)
-    add_text(fx + 0.12, FY + 0.55, FW - 0.24, FH - 0.6, d, 10.5, NAVY)
+    add_text(fx + 0.1, FY + 0.02, FW - 0.16, 0.28, t, 11.5, WHITE if i < FN - 1 else NAVY,
+             bold=True, anchor=MSO_ANCHOR.MIDDLE)
+    add_text(fx + 0.1, FY + 0.38, FW - 0.2, FH - 0.42, d, 9, NAVY, line_spacing=1.05)
 
-add_text(0.5, FY + FH + 0.06, 12.333, 0.28,
-         "Redress loop: unresolved items return to their owner once, with the reviewer's note. Still unresolved: escalated.",
-         10.5, MUTED, italic=True, align=PP_ALIGN.CENTER)
-
-cols = [
-    ("Scoring and live eval", [
-        "Readiness = weighted share of 12 angles: architecture, environments, CI/CD, incidents, security, in-flight work and more",
-        "Covered only if both sides give verifiable quotes and the taker's answer matches the giver's",
-        "Close needs every action accepted and readiness at or above the manager's target (default 80%)",
-        "Live readiness trail: 57% → 66% → 95% → 97%; closed after 1 redress round",
-    ]),
-    ("Manager tracker", [
-        "Every KT: stage, day n of N, deadline, days left, overdue flag",
-        "Who each KT is waiting on: giver, taker or manager",
-        "Action items across KTs with owner, severity, due date, state",
-        "Timeline of stage changes, time in stage, readiness trend, override with a note",
-    ]),
-    ("AI, code and human", [
-        "AI: writes the questions, compares answers, recommends actions, reviews responses",
-        "Code: verifies quotes, scores readiness, applies the close / redress / escalate rule, tracks dates",
-        "Giver and taker: answer independently; act on items or justify ignoring them",
-        "Manager: sets inputs and target; owns escalations and overrides",
-    ]),
-]
-CW3 = (12.333 - 2 * 0.2) / 3
-CY3 = 3.72
-for i, (t, items) in enumerate(cols):
-    cx = 0.5 + i * (CW3 + 0.2)
-    r = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(cx), Inches(CY3), Inches(CW3), Inches(3.05))
-    solid(r, CARD_BG)
-    set_round_radius(r, 0.04)
-    r.shadow.inherit = False
-    add_text(cx + 0.2, CY3 + 0.12, CW3 - 0.4, 0.34, t, 14, NAVY, bold=True)
-    add_bullets(cx + 0.2, CY3 + 0.55, CW3 - 0.4, 2.4, items, 10.5, NAVY, space_after=4)
-
-add_text(0.5, 6.95, 12.333, 0.3,
-         "Eval: simulated giver and taker personas with 4 planted weak angles, one synthetic project, one run (69 s end to end). The target is a stopping rule, not proof of completeness.",
+add_text(0.5, FY + FH + 0.03, 12.333, 0.22,
+         "Redress loop: a rejected item returns to its owner once, with the reviewer's note. Still unresolved: escalated to the manager.",
          9.5, MUTED, italic=True, align=PP_ALIGN.CENTER)
 
+# ---------------------------------------------------------------- footer
+add_text(
+    0.5, 6.58, 12.333, 0.3,
+    "Stack: Python · Streamlit · Google Gemini (structured output), Groq fallback on outage/quota · no GPU needed",
+    10, MUTED, italic=True, font=BODY_FONT, align=PP_ALIGN.CENTER,
+)
+add_text(
+    0.5, 6.87, 12.333, 0.3,
+    "Eval: simulated giver/taker personas, 4 planted weak angles, one synthetic project, one run (69s end to end). Target is a stopping rule, not proof of completeness.",
+    9, MUTED, italic=True, font=BODY_FONT, align=PP_ALIGN.CENTER,
+)
+
 prs.save("Baton_One_Pager.pptx")
-print("wrote Baton_One_Pager.pptx")
+print("wrote Baton_One_Pager.pptx (1 slide)")

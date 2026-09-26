@@ -15,7 +15,8 @@ from baton import kt_sim as sim  # noqa: E402
 from baton.kt_eval import SAMPLE  # noqa: E402
 from baton.kt_models import ANGLE_TITLE, STATUS_LABEL, KTRecord, ProjectInput  # noqa: E402
 from baton.kt_store import (  # noqa: E402
-    action_rows, deadline, list_all, load, readiness, row, time_in_stage_days, waiting_on,
+    action_rows, deadline, list_all, load, readiness, reset_to_seed, row, time_in_stage_days,
+    waiting_on,
 )
 
 st.set_page_config(page_title="Baton KT", layout="wide")
@@ -37,6 +38,15 @@ def guarded(fn, *a):
 with st.sidebar:
     view = st.radio("Viewing as", ["Manager", "KT giver", "KT taker"])
     st.caption("Giver and taker views never show each other's answers.")
+    if view == "Manager":
+        with st.expander("Demo controls"):
+            st.caption("Wipes every current KT (including anything just created or answered "
+                       "live) and restores the 5 bundled demo KTs. No API calls, instant.")
+            confirmed = st.checkbox("I understand this deletes all current KTs")
+            if st.button("Reset to the 5 demo KTs", disabled=not confirmed, type="primary"):
+                n = reset_to_seed()
+                st.success(f"Restored {n} demo KTs.")
+                st.rerun()
 
 recs = list_all()
 labels = {r.id: f"{r.project.title}  [{STATUS_LABEL[r.status]}]" for r in recs}
