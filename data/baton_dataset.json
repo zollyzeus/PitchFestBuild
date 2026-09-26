@@ -1,0 +1,160 @@
+{
+  "role_title": "Finance Operations Manager",
+  "expert_name": "Arthur Vance",
+  "last_day": "2026-10-16",
+  "docs": [
+    {
+      "name": "close_checklist.txt",
+      "text": "Month-End Close Master Checklist. Day -2: Pull the trial balance from NetSuite. Verify all subledgers are locked by 5 PM. Day -1: Run the pre-close diagnostics report. Review major variance flags. Day 1: Post standard recurring journal entries. Check for any unapplied cash receipts in the clearing account. Day 2: Execute the accounts payable aging report. Accrue estimated unbilled goods received. Run the payroll allocation module. Day 3: adjust FX if needed across all foreign currency denominated bank accounts. Day 4: Perform the final balance sheet reconciliation pass. Prepare the executive EBITDA summary deck. Day 5: Final lock of the general ledger and sign off with the controller. Note: skip step 7 in March during the audit cycle. If the legacy interface throws error code 503, apply the usual vendor fix immediately to avoid reporting delays. Always double-check the payroll clearing balance before submission."
+    },
+    {
+      "name": "accruals_runbook.txt",
+      "text": "Accruals and Prepayments Standard Operating Procedure. This document covers the monthly processing of prepaid expenses, deferred revenue, and accrued liabilities for Apex Global. 1. Gather invoice register from procurement by the 25th of the month. 2. Calculate monthly lease amortizations using the schedule in folder 4B. 3. For marketing accruals, ask Dana if the feed breaks during the extraction phase. 4. Record utilities accrual based on historical rolling average if the actual bill has not yet arrived from the provider by Day 2 of close. 5. Review professional fees accrual with legal counsel tracker. Ensure all entries have supporting documentation attached in the ERP system. Reversal of prior month accruals happens automatically on the first business day of the new period. Check the log file in the shared directory to confirm automated reversal execution completed successfully without exception. Contact IT infrastructure desk if automated batch jobs fail."
+    },
+    {
+      "name": "vendor_contact_list.txt",
+      "text": "Critical Financial Systems and Vendor Support Directory. NetSuite ERP Primary Support: CloudTech Solutions, account rep Marcus Brody, mbrody@cloudtech-support.fake. Legacy Banking Interface Gateway: BankStream Direct, tech lead Sarah Jenkins, s.jenkins@bankstream.fake, phone ext 4412. Corporate Credit Cards: SpendEx Global, support hotline 1-800-555-0199. Tax Software: CompliancePro, contact helpdesk@compliancepro.fake. Internal IT Operations: helpdesk@apexglobal.fake. Payroll Provider: PayGlobal Services, account manager Kevin Patel. Facilities Management: Apex Building Corp. Insurance Broker: Sterling & Reed Partners. External Auditors: Crowe & Miller LLP, lead audit partner Rachel Vance. Legal Counsel: Harrison & Croft LLP. Use this directory when escalations are required during high-stress operational periods such as the quarterly financial statement close or sudden system outages affecting cash management."
+    },
+    {
+      "name": "email_thread_bank_feeds.txt",
+      "text": "From: Arthur Vance. To: Treasury Team. Subject: RE: Bank feed sync issues on Monday mornings. Hi team, just documenting our current workaround for the Monday morning bank feed hiccups. As most of you know, the API connection between our primary operating account and the NetSuite aggregator occasionally drops over the weekend due to scheduled maintenance windows at the banking partner. When this happens, do not panic and do not submit duplicate manual files. Simply log into the portal using the admin fallback credentials, trigger a manual delta sync using batch mode 2, and then notify treasury operations. If the synchronization queue remains stuck after thirty minutes, escalate to Sarah Jenkins directly via her emergency line. Also, remember to clear out the local cache folder before running the import script to prevent duplicate transaction entries from populating the cash management ledger. This has saved us countless hours during tight close windows over the past two fiscal years."
+    },
+    {
+      "name": "system_access_note.txt",
+      "text": "System Access and Security Protocols for Finance Operations. Administrator rights are required for NetSuite financial closing tasks, bank token generation, and journal entry override approvals. Password rotation policy dictates a change every ninety days. Do not share your primary Active Directory credentials with temporary contractors or auditors. For emergency access to the treasury management module during off-hours, use the hardware token stored in the office wall safe. Combination to the safe is known by executive leadership and the senior accounting manager. Multi-factor authentication is mandatory for all remote logins accessing financial reporting databases. Report any suspicious login activity immediately to the cybersecurity incident response team. Ensure your session is locked whenever you step away from your workstation to maintain compliance with Sarbanes-Oxley internal control mandates."
+    },
+    {
+      "name": "reconciliation_notes.txt",
+      "text": "Balance Sheet Account Reconciliation Guidelines. All general ledger accounts must be reconciled to supporting subledgers or external statements monthly. Cash accounts reconciliation is due on Day 2 of the close cycle. Accounts receivable aging must tie out to the general ledger control account within a tolerance threshold. Inventory valuation review requires physical count spot checks twice a year. Fixed assets additions need matching capital expenditure authorization forms signed by the VP of Finance. Prepaid expenses schedules must be updated prior to posting monthly amortization entries. Intercompany accounts require bi-weekly balancing sessions with the regional European subsidiary team to avoid large currency translation variances at quarter-end. Document all reconciling items clearly with aging notes and expected resolution dates in the BlackLine reconciliation repository. Unresolved variances older than thirty days must be escalated to the controller immediately."
+    }
+  ],
+  "hidden_facts": [
+    {
+      "id": "F1",
+      "hint": "adjust FX if needed",
+      "truth": "FX adjustment applies only to the EUR and GBP operational accounts, using the closing spot rate published by the European Central Bank on the final business day of the month."
+    },
+    {
+      "id": "F2",
+      "hint": "skip step 7 in March",
+      "truth": "Step 7 refers to the intercompany elimination pass, which is deferred during the March year-end audit because external auditors perform a specialized comprehensive review of intercompany balances manually."
+    },
+    {
+      "id": "F3",
+      "hint": "usual vendor fix",
+      "truth": "The usual vendor fix for error code 503 is logging into the SFTP server, deleting the lock file named 'feed_active.lck', and restarting the data ingestion daemon via command line."
+    },
+    {
+      "id": "F4",
+      "hint": "ask Dana if the feed breaks",
+      "truth": "Dana is the marketing data analyst (ext 309), and when the marketing accrual feed breaks, it is usually because the Salesforce campaign ID format changed and needs a regex update in the ETL script."
+    },
+    {
+      "id": "F5",
+      "hint": "admin fallback credentials",
+      "truth": "The admin fallback credentials for the bank portal are stored in a secure KeePass vault file named 'Treasury_Emergency.kdbx' located on the restricted secure network share '\\\\sec-fs01\\finance\\vault'."
+    },
+    {
+      "id": "F6",
+      "hint": "hardware token stored in the office wall safe",
+      "truth": "The office wall safe combination is 14-28-07, and the physical key to override the electronic keypad is kept inside Arthur's desk bottom left locked drawer."
+    },
+    {
+      "id": "F7",
+      "hint": "tolerance threshold",
+      "truth": "The exact tolerance threshold for accounts receivable aging tie-out is exactly fifty dollars ($50.00); any variance above this requires a detailed investigation report."
+    },
+    {
+      "id": "F8",
+      "hint": "bi-weekly balancing sessions",
+      "truth": "Bi-weekly balancing sessions with the European subsidiary team take place every alternate Tuesday at 8:00 AM EST via Zoom with Marie Curie from the London finance hub."
+    },
+    {
+      "id": "F9",
+      "hint": "payroll clearing balance",
+      "truth": "The payroll clearing balance should always equal the total employer tax liabilities accrued but not yet remitted; if it is anything other than zero or the exact tax liability sum, investigate immediately."
+    },
+    {
+      "id": "F10",
+      "hint": "local cache folder",
+      "truth": "The local cache folder for the bank import script is located at 'C:\\Users\\Public\\FinanceCache\\BankSync\\' and must be completely emptied prior to running manual delta syncs."
+    }
+  ],
+  "qa_questions": [
+    {
+      "question": "What day of the close cycle is the cash accounts reconciliation due?",
+      "answerable_from": "docs",
+      "expected": "Day 2 of the close cycle"
+    },
+    {
+      "question": "Who is the primary NetSuite support contact?",
+      "answerable_from": "docs",
+      "expected": "CloudTech Solutions, account rep Marcus Brody"
+    },
+    {
+      "question": "What is the password rotation policy frequency for system access?",
+      "answerable_from": "docs",
+      "expected": "Every ninety days"
+    },
+    {
+      "question": "Where are all general ledger account reconciliations documented?",
+      "answerable_from": "docs",
+      "expected": "BlackLine reconciliation repository"
+    },
+    {
+      "question": "Which software vendor provides the tax compliance solution?",
+      "answerable_from": "docs",
+      "expected": "CompliancePro"
+    },
+    {
+      "question": "Which specific accounts require FX adjustment during month-end?",
+      "answerable_from": "interview",
+      "expected": "The EUR and GBP operational accounts"
+    },
+    {
+      "question": "Why do we skip step 7 in March during the audit cycle?",
+      "answerable_from": "interview",
+      "expected": "Because external auditors perform a specialized comprehensive review of intercompany balances manually"
+    },
+    {
+      "question": "What is the exact 'usual vendor fix' when the legacy interface throws error code 503?",
+      "answerable_from": "interview",
+      "expected": "Logging into the SFTP server, deleting the lock file named 'feed_active.lck', and restarting the data ingestion daemon via command line"
+    },
+    {
+      "question": "Who is Dana and why do we ask her when the marketing feed breaks?",
+      "answerable_from": "interview",
+      "expected": "Dana is the marketing data analyst (ext 309), and when the feed breaks it is usually because the Salesforce campaign ID format changed and needs a regex update in the ETL script"
+    },
+    {
+      "question": "Where can the admin fallback credentials for the bank portal be found?",
+      "answerable_from": "interview",
+      "expected": "In a secure KeePass vault file named 'Treasury_Emergency.kdbx' located on the restricted secure network share '\\\\sec-fs01\\finance\\vault'"
+    },
+    {
+      "question": "What is the combination and key location for the office wall safe?",
+      "answerable_from": "interview",
+      "expected": "The combination is 14-28-07, and the physical key is kept inside Arthur's desk bottom left locked drawer"
+    },
+    {
+      "question": "What is the exact tolerance threshold for accounts receivable aging tie-outs?",
+      "answerable_from": "none",
+      "expected": ""
+    },
+    {
+      "question": "What is the direct phone extension for the bank lead Sarah Jenkins?",
+      "answerable_from": "none",
+      "expected": ""
+    },
+    {
+      "question": "What software version of NetSuite is the company currently running?",
+      "answerable_from": "none",
+      "expected": ""
+    },
+    {
+      "question": "Who is the primary contact at Crowe & Miller LLP external auditors?",
+      "answerable_from": "none",
+      "expected": ""
+    }
+  ]
+}

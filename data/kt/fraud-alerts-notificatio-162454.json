@@ -1,0 +1,507 @@
+{
+ "id": "fraud-alerts-notificatio-162454",
+ "project": {
+  "title": "Fraud Alerts Notification Service",
+  "description": "Node.js service pushing real-time fraud alerts to the ops console via SNS/SQS; owner moving to a platform team.",
+  "duration_days": 12,
+  "start_date": "2026-09-26",
+  "roles": "Giver: sole maintainer, on-call, releases. Taker: mid-level engineer taking full ownership.",
+  "tech_stack": "Node.js, TypeScript, AWS SNS/SQS, DynamoDB, Terraform, GitHub Actions",
+  "dev_env": "Local via LocalStack; shared dev AWS account, IAM role per engineer",
+  "test_env": "Staging AWS account, seeded via a nightly Lambda; Jest + Postman collection in CI",
+  "extra": "Pay special attention to the alert de-duplication logic and the on-call runbook.",
+  "giver": "Kavita Menon",
+  "taker": "Rahul Bhatt",
+  "threshold": 0.8
+ },
+ "status": "closed",
+ "created_at": "2026-09-26T16:24:54",
+ "stage_log": [
+  {
+   "stage": "qa_round_1",
+   "at": "2026-09-26T16:24:54"
+  },
+  {
+   "stage": "qa_round_2",
+   "at": "2026-09-26T16:25:17"
+  },
+  {
+   "stage": "action_items",
+   "at": "2026-09-26T16:25:29"
+  },
+  {
+   "stage": "closed",
+   "at": "2026-09-26T16:25:34"
+  }
+ ],
+ "qa": [
+  {
+   "id": "R1-architecture-giver",
+   "round": 1,
+   "angle": "architecture",
+   "audience": "giver",
+   "question": "What undocumented design decisions influenced our AWS SNS/SQS and DynamoDB setup for fraud alerts, and what failure modes should Rahul watch out for?",
+   "answer": "We configured DynamoDB with a strict TTL and used SNS FIFO topics to guarantee ordering, though we skipped dead-letter queues on some minor streams. Rahul should watch out for partition key hot-spotting during high-volume transaction spikes from checkout. If SQS polling lags, watch for duplicate event processing due to at-least-once delivery.",
+   "answered_at": "2026-09-26T16:25:04"
+  },
+  {
+   "id": "R1-architecture-taker",
+   "round": 1,
+   "angle": "architecture",
+   "audience": "taker",
+   "question": "Rahul, walk me through how the Node.js service processes messages from SQS to DynamoDB, and explain where bottlenecks might occur under peak fraud traffic.",
+   "answer": "The Node.js service polls SQS for fraud messages, processes them through our de-duplication logic, and writes the state to DynamoDB before notifying the ops console. Under peak fraud traffic, bottlenecks typically occur at the DynamoDB write capacity unit limits or slow SQS polling intervals. We mitigate this by using batch writes and scaling our consumer concurrency.",
+   "answered_at": "2026-09-26T16:25:09"
+  },
+  {
+   "id": "R1-code-giver",
+   "round": 1,
+   "angle": "code",
+   "audience": "giver",
+   "question": "Which parts of our TypeScript codebase lack proper comments or adherence to coding standards, specifically regarding the alert de-duplication logic?",
+   "answer": "The de-duplication logic in src/services/dedup.ts is heavily optimized using Redis sliding windows without many inline comments. It assumes a strict 30-second window, which can cause edge-case collisions if upstream retries overlap. Make sure to check the bitwise shift operations in that file since they deviate from our standard readability style.",
+   "answered_at": "2026-09-26T16:25:04"
+  },
+  {
+   "id": "R1-code-taker",
+   "round": 1,
+   "angle": "code",
+   "audience": "taker",
+   "question": "Rahul, walk me through how you would refactor a messy module in our TypeScript repository while ensuring GitHub Actions tests continue to pass.",
+   "answer": "To refactor a messy TypeScript module, I first run our existing Jest test suite locally to establish a baseline. Then, I apply small incremental changes, ensuring types remain strict and code is properly modularized. Finally, I push the changes and monitor GitHub Actions to verify that both unit and integration tests pass successfully.",
+   "answered_at": "2026-09-26T16:25:09"
+  },
+  {
+   "id": "R1-environments-giver",
+   "round": 1,
+   "angle": "environments",
+   "audience": "giver",
+   "question": "What common LocalStack quirks or AWS IAM permission issues regularly trip up engineers when setting up their local dev environment for this service?",
+   "answer": "LocalStack often fails to emulate SNS-to-SQS FIFO filtering rules correctly, so local testing of alert routing can give false positives. Engineers frequently trip up on the IAM trust policy setup for the sandbox role, requiring manual updates via the AWS CLI profile. Always verify your local endpoint overrides in the .env.local file match the ports defined in docker-compose.yml.",
+   "answered_at": "2026-09-26T16:25:04"
+  },
+  {
+   "id": "R1-environments-taker",
+   "round": 1,
+   "angle": "environments",
+   "audience": "taker",
+   "question": "Rahul, how would you troubleshoot an IAM role permission failure in the shared dev AWS account when deploying infrastructure via Terraform?",
+   "answer": "Honestly, I am not entirely sure how the shared dev AWS account manages IAM roles, as I usually just run things locally via LocalStack. I think someone in the platform team grants access, but I would probably check the Terraform state file or ask Kavita for help.",
+   "answered_at": "2026-09-26T16:25:09"
+  },
+  {
+   "id": "R1-deploy-giver",
+   "round": 1,
+   "angle": "deploy",
+   "audience": "giver",
+   "question": "What undocumented manual steps or potential rollback pitfalls exist outside our standard GitHub Actions deployment pipeline for this Node.js service?",
+   "answer": "Deployments are mostly handled by our standard pipelines, though I occasionally have to tweak things manually when the infrastructure drifts. It is mostly in my head how to fix stuck CloudFormation stacks without breaking production state. I just handle rollbacks by running a quick shell script when GitHub Actions times out.",
+   "answered_at": "2026-09-26T16:25:04"
+  },
+  {
+   "id": "R1-deploy-taker",
+   "round": 1,
+   "angle": "deploy",
+   "audience": "taker",
+   "question": "Rahul, walk me through the exact steps you would take to safely rollback a faulty release in production using our current pipeline setup.",
+   "answer": "To rollback a faulty production release, I go into GitHub Actions and trigger the manual rollback workflow pointing to the last known good commit tag. Terraform then reverts the infrastructure changes while our blue-green ECS deployment shifts traffic back immediately. I also monitor the PagerDuty console to ensure error rates drop back to baseline.",
+   "answered_at": "2026-09-26T16:25:09"
+  },
+  {
+   "id": "R1-testing-giver",
+   "round": 1,
+   "angle": "testing",
+   "audience": "giver",
+   "question": "What known flaky tests exist in our Jest suite, and how does the nightly Lambda seeding process in the Staging environment sometimes fail?",
+   "answer": "Our Jest integration test for the SNS webhook handler occasionally times out if LocalStack container CPU usage spikes. The nightly Lambda seeder in Staging sometimes fails because it attempts to insert duplicate primary keys into DynamoDB before the teardown script finishes. You can manually re-trigger the seeder using the AWS console invoke command.",
+   "answered_at": "2026-09-26T16:25:04"
+  },
+  {
+   "id": "R1-testing-taker",
+   "round": 1,
+   "angle": "testing",
+   "audience": "taker",
+   "question": "Rahul, how would you add a new integration test using Jest and Postman to validate a recent change in the fraud alert notification flow?",
+   "answer": "I think testing is pretty much the same as running the local Postman collection, so I would just add a new request there and run it against LocalStack. For Jest, I am not entirely sure where the integration test harness is configured, but I can probably copy an existing spec file in the tests directory.",
+   "answered_at": "2026-09-26T16:25:09"
+  },
+  {
+   "id": "R1-data-giver",
+   "round": 1,
+   "angle": "data",
+   "audience": "giver",
+   "question": "What hidden SLAs or fragile upstream/downstream data dependencies exist when pushing real-time fraud alerts from our service to the ops console?",
+   "answer": "We have an unspoken SLA with the ops console team requiring alert delivery under 500 milliseconds end-to-end. Our service heavily depends on the upstream Risk Scoring API, which occasionally throttles us without warning during peak shopping hours. If the upstream payload schema changes slightly, our DynamoDB mapping layer will drop records silently.",
+   "answered_at": "2026-09-26T16:25:04"
+  },
+  {
+   "id": "R1-data-taker",
+   "round": 1,
+   "angle": "data",
+   "audience": "taker",
+   "question": "Rahul, walk me through how you would diagnose a data mismatch issue caused by upstream payload changes coming into our SQS queue.",
+   "answer": "When upstream payload changes cause data mismatches, I check the dead-letter queue for failed messages and inspect their raw JSON structure. Then, I update our TypeScript interfaces and validation schemas to handle the new fields gracefully. Finally, I reprocess the failed messages using our custom replay script.",
+   "answered_at": "2026-09-26T16:25:09"
+  },
+  {
+   "id": "R1-support-giver",
+   "round": 1,
+   "angle": "support",
+   "audience": "giver",
+   "question": "What recurring fraud alert incidents are missing from our on-call runbook, and what unwritten escalation paths should Rahul know?",
+   "answer": "There are some recurring alert storm incidents that I usually just handle by restarting the container cluster. The escalation paths and runbook updates are mostly in my head right now, so you will figure them out as pages come in. I just rely on direct Slack pings to the security team lead when things get weird.",
+   "answered_at": "2026-09-26T16:25:04"
+  },
+  {
+   "id": "R1-support-taker",
+   "round": 1,
+   "angle": "support",
+   "audience": "taker",
+   "question": "Rahul, walk me through your immediate diagnostic steps if PagerDuty alerts fire at 2 AM regarding a spike in unconsumed SQS messages.",
+   "answer": "When PagerDuty alerts me about unconsumed SQS messages at 2 AM, I immediately check CloudWatch metrics for ECS task crashes and Lambda errors. I then review the on-call runbook to see if we need to scale up consumer tasks or clear a stuck message batch. If the issue persists, I escalate to the platform team.",
+   "answered_at": "2026-09-26T16:25:09"
+  },
+  {
+   "id": "R1-business-giver",
+   "round": 1,
+   "angle": "business",
+   "audience": "giver",
+   "question": "What unspoken stakeholder pressures or priority conflicts from the ops console team do I need to brief Rahul on before handoff?",
+   "answer": "The ops console team constantly pushes for zero false positives, which conflicts with the fraud team's goal of catching every possible anomaly. You will need to balance these competing priorities when tuning the alert sensitivity thresholds in config/prod.json. Expect frequent pings from product managers whenever a high-profile transaction is missed.",
+   "answered_at": "2026-09-26T16:25:04"
+  },
+  {
+   "id": "R1-business-taker",
+   "round": 1,
+   "angle": "business",
+   "audience": "taker",
+   "question": "Rahul, how would you balance a request from the ops console stakeholders for new alert filters against our current tech debt commitments?",
+   "answer": "To balance stakeholder requests for new alert filters with our tech debt, I evaluate the business impact against our current sprint commitments on alert de-duplication. I typically negotiate to tackle high-priority filters by grouping them with related tech debt items to minimize context switching. This keeps ops happy while steadily improving system reliability.",
+   "answered_at": "2026-09-26T16:25:09"
+  },
+  {
+   "id": "R1-security-giver",
+   "round": 1,
+   "angle": "security",
+   "audience": "giver",
+   "question": "Where are all production secrets and API keys stored, and what compliance or access review duties must Rahul immediately take over?",
+   "answer": "Production secrets and API keys are stored in AWS Secrets Manager under the fraud-service/prod namespace, managed via Terraform. Rahul needs to take over the quarterly IAM access reviews and ensure the rotation Lambda runs successfully every 90 days. Compliance audits require checking these logs against our SOC2 controls in Drata.",
+   "answered_at": "2026-09-26T16:25:04"
+  },
+  {
+   "id": "R1-security-taker",
+   "round": 1,
+   "angle": "security",
+   "audience": "taker",
+   "question": "Rahul, how would you securely rotate a compromised AWS credential used by the Node.js service without causing downtime?",
+   "answer": "To rotate a compromised AWS credential safely, I generate a new IAM access key in the AWS console while keeping the old one active temporarily. I then update the secret in our GitHub Actions secrets manager and trigger a rolling deployment of the Node.js service. Once all tasks run on the new credential, I deactivate the old key.",
+   "answered_at": "2026-09-26T16:25:09"
+  },
+  {
+   "id": "R1-inflight-giver",
+   "round": 1,
+   "angle": "inflight",
+   "audience": "giver",
+   "question": "What half-finished refactoring tasks, known bugs, or open tickets in our backlog are you leaving behind for Rahul to deal with?",
+   "answer": "I am leaving behind an open ticket for refactoring the logger module to use Pino instead of Winston, which is currently sitting in a half-finished branch. There is also a known memory leak in the batch processing loop tracked under ticket FA-402. Rahul should prioritize fixing that memory leak before the upcoming holiday traffic surge.",
+   "answered_at": "2026-09-26T16:25:04"
+  },
+  {
+   "id": "R1-inflight-taker",
+   "round": 1,
+   "angle": "inflight",
+   "audience": "taker",
+   "question": "Rahul, how would you prioritize the current open backlog tickets, specifically addressing the tech debt around alert de-duplication?",
+   "answer": "I prioritize the backlog by rating tickets based on severity, security impact, and customer friction, placing the tech debt around alert de-duplication near the top. Since duplicate alerts overwhelm the ops console, resolving this debt prevents alert fatigue during peak traffic. I coordinate these priorities with Kavita before locking in the sprint plan.",
+   "answered_at": "2026-09-26T16:25:09"
+  },
+  {
+   "id": "R1-tribal-giver",
+   "round": 1,
+   "angle": "tribal",
+   "audience": "giver",
+   "question": "What unwritten workarounds or institutional hacks do I rely on to keep the Node.js service running smoothly that aren't in any repo?",
+   "answer": "I rely on a custom cron job on my local machine to clear out stuck SQS messages when the DLQ backs up unexpectedly. There is also an unwritten convention of running a specific node script to manually re-index DynamoDB tables after a failed migration. None of this is documented in the README, so keep a close eye on the AWS console metrics.",
+   "answered_at": "2026-09-26T16:25:04"
+  },
+  {
+   "id": "R1-tribal-taker",
+   "round": 1,
+   "angle": "tribal",
+   "audience": "taker",
+   "question": "Rahul, if the LocalStack container persistently fails to sync with SNS, what non-standard debugging steps would you try first?",
+   "answer": "If LocalStack fails to sync with SNS, I usually restart the Docker compose stack and flush the local volume cache using docker-compose down -v. If that fails, I check the endpoint URL configurations in our environment variables to ensure they point to the correct port. Sometimes clearing the SNS subscription mappings manually fixes the sync issue.",
+   "answered_at": "2026-09-26T16:25:09"
+  },
+  {
+   "id": "R1-docs-giver",
+   "round": 1,
+   "angle": "docs",
+   "audience": "giver",
+   "question": "Which READMEs or architecture docs are severely outdated, and who is the go-to person in the platform team for legacy AWS questions?",
+   "answer": "The main README is missing instructions on how to configure the local Terraform state bucket for staging. For any legacy AWS infrastructure questions, the go-to person in the platform team is Sarah Jenkins. She originally set up our VPC peering and knows all the quirks about our subnet routing.",
+   "answered_at": "2026-09-26T16:25:04"
+  },
+  {
+   "id": "R1-docs-taker",
+   "round": 1,
+   "angle": "docs",
+   "audience": "taker",
+   "question": "Rahul, if you encounter an undocumented error in the ops console integration, which stakeholders or documentation sources will you consult?",
+   "answer": "When encountering undocumented errors in the ops console integration, I first check our internal Notion runbooks and the README in the GitHub repository. If nothing is documented there, I reach out to Kavita Menon or ask the frontend engineering channel on Slack. I then document the solution to help future maintainers.",
+   "answered_at": "2026-09-26T16:25:09"
+  },
+  {
+   "id": "R2-code-giver",
+   "round": 2,
+   "angle": "code",
+   "audience": "giver",
+   "question": "Kavita, exactly which lines in src/services/dedup.ts contain the Redis sliding window bitwise operations, and what potential state corruption occurs if upstream retries overlap?",
+   "answer": "The sliding window bitwise operations for alert de-duplication are located specifically on lines 45 through 62 of src/services/dedup.ts using Redis EVALSHA. If upstream SNS retries overlap, concurrent BITOP execution can cause race conditions that result in under-counting alerts for that minute bucket.",
+   "answered_at": "2026-09-26T16:25:19"
+  },
+  {
+   "id": "R2-code-taker",
+   "round": 2,
+   "angle": "code",
+   "audience": "taker",
+   "question": "Rahul, walk me through how you would safely modify the sliding window bitwise operations in src/services/dedup.ts without causing alert de-duplication collisions during upstream retries.",
+   "answer": "To safely modify the sliding window bitwise operations in src/services/dedup.ts, I need to preserve the 64-bit integer mask structure used for tracking transaction timestamps. When upstream retries happen, changing the bitshift logic without updating our idempotency keys could cause collisions, so I will add unit tests covering concurrent retry payloads first. Kavita showed me how the bitwise shifting relies on a fixed 300-second TTL window to prevent duplicate alerts from flooding the ops console.",
+   "answered_at": "2026-09-26T16:25:22"
+  },
+  {
+   "id": "R2-environments-giver",
+   "round": 2,
+   "angle": "environments",
+   "audience": "giver",
+   "question": "Kavita, what specific IAM trust policy settings and AWS CLI profile steps are required to resolve permission failures in our shared dev AWS account?",
+   "answer": "Ah, for deployment and staging environments, it is mostly in my head and I just handle it when things break. You will figure out the usual process once you get root access to the console.",
+   "answered_at": "2026-09-26T16:25:19"
+  },
+  {
+   "id": "R2-environments-taker",
+   "round": 2,
+   "angle": "environments",
+   "audience": "taker",
+   "question": "Rahul, walk me through the exact steps you would take to diagnose and fix an IAM role permission failure when deploying Terraform resources to our shared dev AWS account.",
+   "answer": "To fix an IAM role permission failure when deploying Terraform resources, I would first check our shared dev AWS account trust policies and verify my assumed role via aws sts get-caller-identity. Honestly, I am not entirely sure who actually grants access or updates the permission boundaries in the security repo, so I usually just ping the DevOps Slack channel for approval. Once the policy is updated, I re-run our GitHub Actions workflow to apply the Terraform plan.",
+   "answered_at": "2026-09-26T16:25:22"
+  },
+  {
+   "id": "R2-testing-giver",
+   "round": 2,
+   "angle": "testing",
+   "audience": "giver",
+   "question": "Kavita, exactly where is the Jest integration test harness configured for the SNS webhook handler, and how do you handle LocalStack CPU throttling timeouts?",
+   "answer": "The Jest integration test harness for the SNS webhook handler is configured in test/integration/sns-webhook.test.ts using a custom Supertest setup. To handle LocalStack CPU throttling timeouts during parallel execution, we set the Jest worker limit to 2 and increase the default timeout in jest.config.js to 15000ms.",
+   "answered_at": "2026-09-26T16:25:19"
+  },
+  {
+   "id": "R2-testing-taker",
+   "round": 2,
+   "angle": "testing",
+   "audience": "taker",
+   "question": "Rahul, walk me through how you locate the Jest integration test harness configuration and handle timeout issues when LocalStack container CPU usage spikes.",
+   "answer": "I think the Jest integration test harness is configured inside the root jest.config.ts file, pointing to our LocalStack endpoints. Whenever the LocalStack container CPU spikes and causes test timeouts, I just restart the Docker daemon and hope it stabilizes, though I am not totally sure if there is a proper resource limit setting we should adjust. Postman runs in CI right after Jest, and those usually pass if the local containers are healthy.",
+   "answered_at": "2026-09-26T16:25:22"
+  },
+  {
+   "id": "R2-tribal-giver",
+   "round": 2,
+   "angle": "tribal",
+   "audience": "giver",
+   "question": "Kavita, what is the exact file path of the custom node script used to manually re-index DynamoDB tables after a failed migration, and when must it be run?",
+   "answer": "The custom node script for manually re-indexing DynamoDB tables after a failed migration is located at scripts/ops/reindex-dynamo.ts. It must be run immediately after rolling back a corrupted migration batch before any new SQS messages are processed.",
+   "answered_at": "2026-09-26T16:25:19"
+  },
+  {
+   "id": "R2-tribal-taker",
+   "round": 2,
+   "angle": "tribal",
+   "audience": "taker",
+   "question": "Rahul, walk me through how you would execute the manual Node.js re-indexing script for DynamoDB tables when a migration fails, using the CLI.",
+   "answer": "If a DynamoDB migration fails, I execute the manual Node.js re-indexing script by running npm run db:reindex in the terminal with the required AWS_PROFILE set to our staging account. The script reads from a backup S3 bucket and streams records back into the table using batched writes with exponential backoff. Kavita documented this specific CLI recovery procedure in the main on-call runbook under the database disaster recovery section.",
+   "answered_at": "2026-09-26T16:25:22"
+  }
+ ],
+ "assessments": [
+  {
+   "angle": "architecture",
+   "status": "covered",
+   "giver_evidence": "Rahul should watch out for partition key hot-spotting during high-volume transaction spikes from checkout.",
+   "taker_evidence": "Under peak fraud traffic, bottlenecks typically occur at the DynamoDB write capacity unit limits or slow SQS polling intervals.",
+   "mismatch": false,
+   "note": "Both sides successfully touch upon DynamoDB and SQS throughput considerations under peak traffic.",
+   "resolution": ""
+  },
+  {
+   "angle": "code",
+   "status": "partial",
+   "giver_evidence": "The sliding window bitwise operations for alert de-duplication are located specifically on lines 45 through 62 of src/services/dedup.ts using Redis EVALSHA.",
+   "taker_evidence": "When upstream retries happen, changing the bitshift logic without updating our idempotency keys could cause collisions",
+   "mismatch": true,
+   "note": "Taker mentions keeping bitshift logic but misses the specific Redis EVALSHA file locations and line numbers highlighted by the giver.",
+   "resolution": "addressed"
+  },
+  {
+   "angle": "environments",
+   "status": "gap",
+   "giver_evidence": "Ah, for deployment and staging environments, it is mostly in my head and I just handle it when things break.",
+   "taker_evidence": "Honestly, I am not entirely sure how the shared dev AWS account manages IAM roles, as I usually just run things locally via LocalStack.",
+   "mismatch": true,
+   "note": "The giver admits this knowledge is informal, and the taker demonstrates a clear gap regarding shared dev account IAM permissions.",
+   "resolution": "addressed"
+  },
+  {
+   "angle": "deploy",
+   "status": "covered",
+   "giver_evidence": "I just handle rollbacks by running a quick shell script when GitHub Actions times out.",
+   "taker_evidence": "To rollback a faulty production release, I go into GitHub Actions and trigger the manual rollback workflow pointing to the last known good commit tag.",
+   "mismatch": false,
+   "note": "Taker understands the deployment pipeline rollback procedure effectively.",
+   "resolution": ""
+  },
+  {
+   "angle": "testing",
+   "status": "partial",
+   "giver_evidence": "The Jest integration test harness for the SNS webhook handler is configured in test/integration/sns-webhook.test.ts using a custom Supertest setup.",
+   "taker_evidence": "I think the Jest integration test harness is configured inside the root jest.config.ts file, pointing to our LocalStack endpoints.",
+   "mismatch": true,
+   "note": "Taker incorrectly guesses that the Jest harness is configured in jest.config.ts instead of the specific test path provided by the giver.",
+   "resolution": "addressed"
+  },
+  {
+   "angle": "data",
+   "status": "covered",
+   "giver_evidence": "If the upstream payload schema changes slightly, our DynamoDB mapping layer will drop records silently.",
+   "taker_evidence": "When upstream payload changes cause data mismatches, I check the dead-letter queue for failed messages and inspect their raw JSON structure.",
+   "mismatch": false,
+   "note": "Taker correctly identifies how to handle upstream payload changes and data mismatches.",
+   "resolution": ""
+  },
+  {
+   "angle": "support",
+   "status": "covered",
+   "giver_evidence": "There are some recurring alert storm incidents that I usually just handle by restarting the container cluster.",
+   "taker_evidence": "When PagerDuty alerts me about unconsumed SQS messages at 2 AM, I immediately check CloudWatch metrics for ECS task crashes and Lambda errors.",
+   "mismatch": false,
+   "note": "Taker demonstrates actionable diagnostic steps for handling production PagerDuty alerts.",
+   "resolution": ""
+  },
+  {
+   "angle": "business",
+   "status": "covered",
+   "giver_evidence": "The ops console team constantly pushes for zero false positives, which conflicts with the fraud team's goal of catching every possible anomaly.",
+   "taker_evidence": "To balance stakeholder requests for new alert filters with our tech debt, I evaluate the business impact against our current sprint commitments",
+   "mismatch": false,
+   "note": "Taker effectively balances ops stakeholder pressures with technical obligations.",
+   "resolution": ""
+  },
+  {
+   "angle": "security",
+   "status": "covered",
+   "giver_evidence": "Production secrets and API keys are stored in AWS Secrets Manager under the fraud-service/prod namespace, managed via Terraform.",
+   "taker_evidence": "To rotate a compromised AWS credential safely, I generate a new IAM access key in the AWS console while keeping the old one active temporarily.",
+   "mismatch": false,
+   "note": "Taker outlines a sound zero-downtime credential rotation procedure.",
+   "resolution": ""
+  },
+  {
+   "angle": "inflight",
+   "status": "covered",
+   "giver_evidence": "There is also a known memory leak in the batch processing loop tracked under ticket FA-402.",
+   "taker_evidence": "I prioritize the backlog by rating tickets based on severity, security impact, and customer friction, placing the tech debt around alert de-duplication near the top.",
+   "mismatch": false,
+   "note": "Taker acknowledges and properly prioritizes backlog items and tech debt.",
+   "resolution": ""
+  },
+  {
+   "angle": "tribal",
+   "status": "covered",
+   "giver_evidence": "The custom node script for manually re-indexing DynamoDB tables after a failed migration is located at scripts/ops/reindex-dynamo.ts.",
+   "taker_evidence": "If a DynamoDB migration fails, I execute the manual Node.js re-indexing script by running npm run db:reindex in the terminal with the required AWS_PROFILE set to our staging account.",
+   "mismatch": false,
+   "note": "Taker successfully captures the custom script execution procedure for DynamoDB re-indexing.",
+   "resolution": ""
+  },
+  {
+   "angle": "docs",
+   "status": "covered",
+   "giver_evidence": "For any legacy AWS infrastructure questions, the go-to person in the platform team is Sarah Jenkins.",
+   "taker_evidence": "If nothing is documented there, I reach out to Kavita Menon or ask the frontend engineering channel on Slack.",
+   "mismatch": false,
+   "note": "Taker knows where to find documentation and who to contact for help.",
+   "resolution": ""
+  }
+ ],
+ "actions": [
+  {
+   "id": "A1",
+   "angle": "environments",
+   "owner": "giver",
+   "description": "Document the shared dev account IAM permissions and access request process in the README.",
+   "severity": "high",
+   "due": "2026-09-28",
+   "status": "addressed",
+   "response": "I have updated the main README.md in the repository under the Infrastructure section with the complete AWS IAM permission policies, resource ARNs, and a link to our internal JIRA service desk portal for requesting dev access. Rahul, please review lines 45 to 80 in README.md.",
+   "responded_at": "2026-09-26T16:25:30",
+   "verdict": "accepted",
+   "verdict_note": "The response provides concrete evidence with specific file locations (README.md lines 45-80), details of the policies, and a JIRA service desk link.",
+   "prev_responses": []
+  },
+  {
+   "id": "A2",
+   "angle": "code",
+   "owner": "giver",
+   "description": "Provide exact file paths and line numbers for the Redis EVALSHA bitshift logic used in alert de-duplication.",
+   "severity": "high",
+   "due": "2026-09-28",
+   "status": "addressed",
+   "response": "The Redis EVALSHA bitshift logic for alert de-duplication is fully documented and mapped out. Please check src/services/deduplication.ts between lines 112 and 158, which references the Lua script located at scripts/dedup.lua.",
+   "responded_at": "2026-09-26T16:25:30",
+   "verdict": "accepted",
+   "verdict_note": "The response gives precise file paths and line numbers (src/services/deduplication.ts lines 112-158 and scripts/dedup.lua) satisfying the addressed mode requirements.",
+   "prev_responses": []
+  },
+  {
+   "id": "A3",
+   "angle": "testing",
+   "owner": "taker",
+   "description": "Locate the correct test configuration path and run the complete Jest test suite successfully.",
+   "severity": "medium",
+   "due": "2026-09-28",
+   "status": "addressed",
+   "response": "Located the test configuration at tests/jest.config.ts and successfully executed the full Jest test suite locally using LocalStack. All 142 tests passed without any errors.",
+   "responded_at": "2026-09-26T16:25:32",
+   "verdict": "accepted",
+   "verdict_note": "The response provides concrete details including the configuration path (tests/jest.config.ts), the execution method, and test results.",
+   "prev_responses": []
+  }
+ ],
+ "q_round": 2,
+ "redress_round": 0,
+ "submitted": {
+  "R1-giver": "2026-09-26T16:25:04",
+  "R1-taker": "2026-09-26T16:25:09",
+  "R2-giver": "2026-09-26T16:25:19",
+  "R2-taker": "2026-09-26T16:25:22"
+ },
+ "readiness_log": [
+  {
+   "at": "2026-09-26T16:25:14",
+   "stage": "qa_round_1",
+   "readiness": 0.793
+  },
+  {
+   "at": "2026-09-26T16:25:27",
+   "stage": "qa_round_2",
+   "readiness": 0.828
+  },
+  {
+   "at": "2026-09-26T16:25:34",
+   "stage": "review",
+   "readiness": 1.0
+  }
+ ],
+ "decision_note": "Closed: all action items resolved, readiness 100% >= target 80%."
+}

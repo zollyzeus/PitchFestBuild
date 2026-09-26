@@ -1,0 +1,642 @@
+{
+ "id": "legacy-mainframe-batch-i-162534",
+ "project": {
+  "title": "Legacy Mainframe Batch Interface",
+  "description": "COBOL/JCL nightly batch that feeds the core ledger from a legacy mainframe; the only engineer who understands the JCL scheduling is retiring from this project.",
+  "duration_days": 20,
+  "start_date": "2026-09-26",
+  "roles": "Giver: 15-year owner, sole SME on the mainframe side. Taker: newly assigned, no mainframe background.",
+  "tech_stack": "COBOL, JCL, CA-7 scheduler, DB2, MQ, SFTP file drops",
+  "dev_env": "Shared mainframe LPAR, TSO/ISPF access via VPN, no local emulator",
+  "test_env": "Mainframe test region, refreshed quarterly from prod; manual regression checklist",
+  "extra": "Escalate quickly if scheduling or DB2 access knowledge is not transferable in writing.",
+  "giver": "Suresh Pillai",
+  "taker": "Ananya Ghosh",
+  "threshold": 0.85
+ },
+ "status": "escalated",
+ "created_at": "2026-09-26T16:25:34",
+ "stage_log": [
+  {
+   "stage": "qa_round_1",
+   "at": "2026-09-26T16:25:34"
+  },
+  {
+   "stage": "qa_round_2",
+   "at": "2026-09-26T16:26:20"
+  },
+  {
+   "stage": "action_items",
+   "at": "2026-09-26T16:26:36"
+  },
+  {
+   "stage": "open_redress",
+   "at": "2026-09-26T16:26:39"
+  },
+  {
+   "stage": "escalated",
+   "at": "2026-09-26T16:26:56"
+  }
+ ],
+ "qa": [
+  {
+   "id": "R1-architecture-giver",
+   "round": 1,
+   "angle": "architecture",
+   "audience": "giver",
+   "question": "Suresh, what undocumented design choices governed how our COBOL and DB2 components interact with MQ queues, and what major failure points should Ananya watch for?",
+   "answer": "The COBOL programs interact with MQ queues using proprietary CICS MQ macro calls embedded directly in the Procedure Division. The biggest failure point to watch for is asynchronous message backout looping when the DB2 thread times out during peak ledger updates.",
+   "answered_at": "2026-09-26T16:26:04"
+  },
+  {
+   "id": "R1-architecture-taker",
+   "round": 1,
+   "angle": "architecture",
+   "audience": "taker",
+   "question": "Ananya, walk me through how you would trace a failed batch step from the CA-7 scheduler through the COBOL program to its DB2 update on the LPAR.",
+   "answer": "To trace a failed batch step, I would first check the CA-7 scheduler log to identify the specific abend code for the job. Then, I would navigate into TSO/ISPF to examine the JES2 spool output for the COBOL program's sysout, which pinpoints the exact line where the error occurred. Finally, I would inspect the DB2 error logs to see if the failure stemmed from a SQL timeout or a lock conflict on the ledger tables.",
+   "answered_at": "2026-09-26T16:26:11"
+  },
+  {
+   "id": "R1-code-giver",
+   "round": 1,
+   "angle": "code",
+   "audience": "giver",
+   "question": "Suresh, where do the actual JCL and COBOL source versions live in TSO/ISPF, and what unwritten coding standards must Ananya follow when modifying them?",
+   "answer": "All source versions live in partitioned data sets under PROD.COBOL.SOURCE and PROD.JCL.CNTL accessible via TSO/ISPF. When modifying them, you must always preserve column 72-80 sequence numbers and use strict uppercase formatting to prevent compiler syntax faults.",
+   "answered_at": "2026-09-26T16:26:04"
+  },
+  {
+   "id": "R1-code-taker",
+   "round": 1,
+   "angle": "code",
+   "audience": "taker",
+   "question": "Ananya, assuming you need to patch a COBOL routine, explain step-by-step how you will edit, compile, and link-edit the source within the TSO/ISPF environment.",
+   "answer": "When patching a COBOL routine, I open the source member in the ISPF editor using option 3.4 to locate the partitioned dataset. After making the necessary changes, I submit a customized JCL compile and link-edit job using the IGYCCWE compiler. Once the job completes with a return code of zero, the updated load module is automatically placed in the execution library.",
+   "answered_at": "2026-09-26T16:26:11"
+  },
+  {
+   "id": "R1-environments-giver",
+   "round": 1,
+   "angle": "environments",
+   "audience": "giver",
+   "question": "Suresh, what hidden configuration quirks exist in our shared mainframe LPAR access via VPN, and how is the quarterly DB2 test region refresh executed?",
+   "answer": "Our shared LPAR access requires an IBM Personal Communications client tunnel routed through a specific RSA token VPN gateway. The quarterly DB2 test region refresh is executed using a custom IDCAMS and DSN1COPY script that I kick off manually every quarter-end.",
+   "answered_at": "2026-09-26T16:26:04"
+  },
+  {
+   "id": "R1-environments-taker",
+   "round": 1,
+   "angle": "environments",
+   "audience": "taker",
+   "question": "Ananya, walk me through how you will connect to the TSO/ISPF test region today, verify your DB2 access, and execute the manual test regression checklist.",
+   "answer": "I think the test region connects the exact same way as production using our standard VPN and TN3270 emulator client. I am not entirely sure who actually grants the DB2 table access, but I usually just try running a quick query in SPUFI to verify my permissions. For the regression checklist, I just follow the PDF on the shared drive and check off items manually as I go through them.",
+   "answered_at": "2026-09-26T16:26:11"
+  },
+  {
+   "id": "R1-deploy-giver",
+   "round": 1,
+   "angle": "deploy",
+   "audience": "giver",
+   "question": "Suresh, what are the exact manual JCL submission steps for releasing a nightly batch fix to prod, and what is your rollback procedure if CA-7 fails?",
+   "answer": "Deployment is mostly handled through my own internal checklist and routine manual overrides that I keep in my head. If anything goes sideways during a release, I just use standard system commands and my usual process to back it out.",
+   "answered_at": "2026-09-26T16:26:04"
+  },
+  {
+   "id": "R1-deploy-taker",
+   "round": 1,
+   "angle": "deploy",
+   "audience": "taker",
+   "question": "Ananya, walk me through how you would promote a validated COBOL change into prod using CA-7 and JCL, including your immediate rollback verification steps.",
+   "answer": "To promote a validated COBOL change, I update the production JCL pointers and submit the promotion request via CA-7 for the next maintenance window. For immediate rollback verification, I keep a backup load module ready in a rollback dataset so we can quickly revert if the step abends. I also monitor the immediate DB2 commit logs to ensure no corrupt ledger updates were persisted.",
+   "answered_at": "2026-09-26T16:26:11"
+  },
+  {
+   "id": "R1-testing-giver",
+   "round": 1,
+   "angle": "testing",
+   "audience": "giver",
+   "question": "Suresh, what undocumented quirks plague the quarterly mainframe test environment, and how do you mock missing SFTP file drops during test execution?",
+   "answer": "The test region suffers from phantom abends because test datasets are often left uncataloged by prior batch runs. To mock missing SFTP file drops, we manually inject dummy flat files into the TEST.SFTP.INBOUND staging dataset using ISPF option 3.4.",
+   "answered_at": "2026-09-26T16:26:04"
+  },
+  {
+   "id": "R1-testing-taker",
+   "round": 1,
+   "angle": "testing",
+   "audience": "taker",
+   "question": "Ananya, walk me through how you would execute the manual regression checklist using test region data after an SFTP file drop simulation fails.",
+   "answer": "Not sure how we simulate an SFTP file drop failure, but I think we just delete the file from the landing directory and run the regression checklist manually. I usually check the test region data by querying the DB2 tables directly through SPUFI to see if the records populated. If the checklist fails, I just re-run the whole test script from the beginning.",
+   "answered_at": "2026-09-26T16:26:11"
+  },
+  {
+   "id": "R1-data-giver",
+   "round": 1,
+   "angle": "data",
+   "audience": "giver",
+   "question": "Suresh, what upstream vendor SLAs govern the incoming SFTP file drops, and what silent data corruption risks exist in the DB2 ledger integration?",
+   "answer": "Upstream vendors are contractually bound to deliver SFTP files by 02:00 EST under a strict SLA. The primary silent data corruption risk stems from unhandled decimal overflow conditions when incoming packed decimal fields mismatch the DB2 ledger schema.",
+   "answered_at": "2026-09-26T16:26:04"
+  },
+  {
+   "id": "R1-data-taker",
+   "round": 1,
+   "angle": "data",
+   "audience": "taker",
+   "question": "Ananya, walk me through how you would investigate a delayed SFTP file drop from a vendor and verify its downstream impact on the core ledger DB2 tables.",
+   "answer": "If an SFTP file drop from a vendor is delayed, I check the Connect:Direct logs to verify if the transmission is still in progress or stalled. I then check the dependent CA-7 jobs to place them on hold so they do not process incomplete data against the core ledger DB2 tables. Once the file arrives, I release the dependencies and monitor the update job to ensure all balances reconcile properly.",
+   "answered_at": "2026-09-26T16:26:11"
+  },
+  {
+   "id": "R1-support-giver",
+   "round": 1,
+   "angle": "support",
+   "audience": "giver",
+   "question": "Suresh, what recurring CA-7 or DB2 lockup incidents happen during the nightly batch, and which undocumented runbooks do you rely on for escalation?",
+   "answer": "I typically handle support issues based on intuition and experience rather than following formal documentation. Whenever the system acts up during the night shift, I rely on my own methods to stabilize the environment.",
+   "answered_at": "2026-09-26T16:26:04"
+  },
+  {
+   "id": "R1-support-taker",
+   "round": 1,
+   "angle": "support",
+   "audience": "taker",
+   "question": "Ananya, walk me through how you would handle an emergency 3 AM page for a CA-7 job abend in the nightly batch, from initial TSO alert to manager escalation.",
+   "answer": "When receiving a 3 AM page for a CA-7 job abend, I log into the shared mainframe LPAR via TSO to review the JES spool for the failure reason. If it is a simple restartable abend, I use CA-7 commands to requeue the job after resolving the underlying condition, such as freeing a locked dataset. If the issue persists past fifteen minutes, I immediately escalate to the duty manager and notify stakeholders.",
+   "answered_at": "2026-09-26T16:26:11"
+  },
+  {
+   "id": "R1-business-giver",
+   "round": 1,
+   "angle": "business",
+   "audience": "giver",
+   "question": "Suresh, what critical stakeholder expectations or rigid ledger cutoff timelines must Ananya know regarding this nightly batch interface?",
+   "answer": "The core ledger cutoff is rigidly fixed at 04:00 EST daily to ensure downstream clearing houses receive balanced feeds. Missing this window invokes severe financial penalties and requires immediate escalation to the VP of Finance.",
+   "answered_at": "2026-09-26T16:26:04"
+  },
+  {
+   "id": "R1-business-taker",
+   "round": 1,
+   "angle": "business",
+   "audience": "taker",
+   "question": "Ananya, how would you explain a 2-hour delay in the core ledger core batch processing to critical business stakeholders, and what mitigation steps would you present?",
+   "answer": "To address a 2-hour delay in core batch processing, I would immediately draft an incident notification for critical business stakeholders detailing the root cause and revised completion ETA. I would present mitigation steps such as prioritizing critical ledger updates first and deferring non-essential reporting jobs to an off-peak window. Regular status updates would be sent every thirty minutes until the batch successfully finishes.",
+   "answered_at": "2026-09-26T16:26:11"
+  },
+  {
+   "id": "R1-security-giver",
+   "round": 1,
+   "angle": "security",
+   "audience": "giver",
+   "question": "Suresh, how are mainframe RACF credentials, DB2 table access, and production SFTP secrets managed, and what upcoming compliance audits should Ananya prepare for?",
+   "answer": "Mainframe RACF credentials and DB2 table access are managed via standard security group profiles assigned by the enterprise IAM team. Ananya must prepare for the upcoming PCI-DSS compliance audit next quarter by reviewing all elevated user IDs.",
+   "answered_at": "2026-09-26T16:26:04"
+  },
+  {
+   "id": "R1-security-taker",
+   "round": 1,
+   "angle": "security",
+   "audience": "taker",
+   "question": "Ananya, walk me through how you would audit your TSO/ISPF and DB2 access rights to ensure compliance with our security and credential policies.",
+   "answer": "To audit my TSO/ISPF and DB2 access rights, I review our RACF profile definitions and run periodic access report queries provided by the security team. I verify that my user ID only has the necessary update permissions for our development and test LPAR regions. Any orphaned or excessive privileges are immediately reported to the compliance officer for remediation.",
+   "answered_at": "2026-09-26T16:26:11"
+  },
+  {
+   "id": "R1-inflight-giver",
+   "round": 1,
+   "angle": "inflight",
+   "audience": "giver",
+   "question": "Suresh, what half-done JCL modifications or open technical debt tickets are currently sitting in your TSO work datasets that Ananya must inherit?",
+   "answer": "There is an open technical debt ticket regarding a memory leak in job LEDGER05, with half-done JCL modifications sitting in my personal TSO work dataset SPPILLAI.WORK.JCL. She must inherit this dataset and finish refactoring the step overrides before month-end.",
+   "answered_at": "2026-09-26T16:26:04"
+  },
+  {
+   "id": "R1-inflight-taker",
+   "round": 1,
+   "angle": "inflight",
+   "audience": "taker",
+   "question": "Ananya, walk me through how you will prioritize and complete Suresh's pending JCL optimization ticket without disrupting the nightly batch schedule.",
+   "answer": "To handle Suresh's pending JCL optimization ticket, I first review the proposed changes in a non-production LPAR to ensure they do not alter the step execution sequence. I will schedule the deployment during a low-risk maintenance window and monitor the CA-7 dependency tree closely. This approach ensures we improve batch efficiency without risking the stability of the nightly schedule.",
+   "answered_at": "2026-09-26T16:26:11"
+  },
+  {
+   "id": "R1-tribal-giver",
+   "round": 1,
+   "angle": "tribal",
+   "audience": "giver",
+   "question": "Suresh, what undocumented tribal workarounds or unwritten rules do you use to keep the CA-7 scheduler from hanging during month-end closes?",
+   "answer": "During month-end closes, CA-7 frequently hangs due to job dependency deadlocks caused by overlapping calendar cycles. My unwritten rule is to manually force-complete prerequisite job LEDGER99 via command line to unblock the entire queue.",
+   "answered_at": "2026-09-26T16:26:04"
+  },
+  {
+   "id": "R1-tribal-taker",
+   "round": 1,
+   "angle": "tribal",
+   "audience": "taker",
+   "question": "Ananya, if the CA-7 scheduler hangs during a month-end run, walk me through the unofficial diagnostic checks and workarounds Suresh mentioned.",
+   "answer": "If the CA-7 scheduler hangs during a month-end run, Suresh mentioned we should check the active queues using specific internal system commands to look for deadlocked tasks. The unofficial workaround is to issue a targeted recycle of the primary CA-7 address space while keeping the dependent started tasks active. We then manually verify that the trigger conditions for the blocked jobs are forcefully satisfied.",
+   "answered_at": "2026-09-26T16:26:11"
+  },
+  {
+   "id": "R1-docs-giver",
+   "round": 1,
+   "angle": "docs",
+   "audience": "giver",
+   "question": "Suresh, where are the most accurate JCL flowcharts stored, and which legacy team contacts outside IT are essential when documentation fails?",
+   "answer": "The most accurate JCL flowcharts are maintained in a local Visio file on my shared drive at \\\\filesrv01\\legacy\\batch_flow.vsd. When documentation fails entirely, Sarah Jenkins in accounting operations is the essential contact who knows every manual ledger workaround.",
+   "answered_at": "2026-09-26T16:26:04"
+  },
+  {
+   "id": "R1-docs-taker",
+   "round": 1,
+   "angle": "docs",
+   "audience": "taker",
+   "question": "Ananya, walk me through how you will locate the system documentation for the nightly batch and verify its accuracy against the current TSO/ISPF implementation.",
+   "answer": "I locate the system documentation for the nightly batch in our central Confluence repository under the mainframe engineering section. To verify its accuracy, I cross-reference the documented step names and dataset allocations against the live JCL libraries in TSO/ISPF. Any discrepancies found during this review are immediately updated in the documentation to prevent future confusion.",
+   "answered_at": "2026-09-26T16:26:11"
+  },
+  {
+   "id": "R2-architecture-giver",
+   "round": 2,
+   "angle": "architecture",
+   "audience": "giver",
+   "question": "Suresh, regarding those CICS MQ macro calls in COBOL, precisely what DB2 thread timeout error code triggers asynchronous message backout looping?",
+   "answer": "The DB2 thread timeout error code is SQLCODE -911 with reason code 00C90096. This specific combination triggers our custom asynchronous message backout routine in the COBOL error handler. Ananya, make sure you review module LEDGERERR to see how it manages the MQ rollback loop.",
+   "answered_at": "2026-09-26T16:26:24"
+  },
+  {
+   "id": "R2-architecture-taker",
+   "round": 2,
+   "angle": "architecture",
+   "audience": "taker",
+   "question": "Ananya, walk me through how you will specifically identify and intercept an asynchronous MQ message backout loop resulting from a DB2 thread timeout on the LPAR.",
+   "answer": "To identify and intercept an asynchronous MQ message backout loop from a DB2 thread timeout, I will first monitor the CA-7 active queue for repeating abends and check the MQ dead-letter queue. Then, I will use the IBM MQ Explorer or display commands to inspect the backout threshold and backout queue settings for the affected channel. Finally, I will temporarily stop the listener using the STOP LISTENER command and purge the poisoned messages before restarting the service.",
+   "answered_at": "2026-09-26T16:26:29"
+  },
+  {
+   "id": "R2-environments-giver",
+   "round": 2,
+   "angle": "environments",
+   "audience": "giver",
+   "question": "Suresh, exactly how must Ananya configure her IBM Personal Communications client and RSA token to authenticate through our specific VPN gateway?",
+   "answer": "To configure your IBM Personal Communications client, set the host address to mvsprod.internal.net and port 3270 for the TN3270 secure session. You will need to enter your RSA token passcode combined with your LDAP PIN when prompted by the Cisco AnyConnect gateway. Once authenticated, your TSO ID will grant access to the shared LPAR.",
+   "answered_at": "2026-09-26T16:26:24"
+  },
+  {
+   "id": "R2-environments-taker",
+   "round": 2,
+   "angle": "environments",
+   "audience": "taker",
+   "question": "Ananya, walk me through the exact steps you will take to configure your IBM Personal Communications client and authenticate via the RSA token to access our LPAR.",
+   "answer": "I think configuring the IBM Personal Communications client is the same as setting up a standard terminal emulator, but I am not entirely sure about the exact port numbers. I just copy the host address from the wiki and use my physical RSA token to generate the passcode. Suresh mentioned something about a secure profile, but I usually just guess the settings until it connects.",
+   "answered_at": "2026-09-26T16:26:29"
+  },
+  {
+   "id": "R2-deploy-giver",
+   "round": 2,
+   "angle": "deploy",
+   "audience": "giver",
+   "question": "Suresh, since deployment relies entirely on your internal mental checklist, what are the precise manual system commands you run to back out a failed prod release?",
+   "answer": "To back out a failed prod release, I first execute the CANCEL command in CA-7 for the active job stream. Then I run a custom TSO clist called EXEC 'SYS2.CLIST(ROLLBACK)' to restore the prior load modules. Frankly, it is mostly in my head and I just handle it based on what feels right during the crisis.",
+   "answered_at": "2026-09-26T16:26:24"
+  },
+  {
+   "id": "R2-deploy-taker",
+   "round": 2,
+   "angle": "deploy",
+   "audience": "taker",
+   "question": "Ananya, walk me through how you will execute a rollback using your backup load module if a promoted COBOL change abends during the production maintenance window.",
+   "answer": "If a promoted COBOL change abends during the production maintenance window, I will use our standard JCL override procedure to point the steplib back to the backup load library dataset. I then rerun the specific step using the CA-7 RESTART command after confirming the previous abend code with Suresh's checklist. This ensures the ledger processing recovers cleanly without data corruption.",
+   "answered_at": "2026-09-26T16:26:29"
+  },
+  {
+   "id": "R2-testing-giver",
+   "round": 2,
+   "angle": "testing",
+   "audience": "giver",
+   "question": "Suresh, what is the exact ISPF option 3.4 dataset naming convention you use to manually inject dummy flat files for mocking missing SFTP file drops?",
+   "answer": "You need to access ISPF option 3.4 and look for datasets matching the mask SPPILLAI.TEST.DATA.*. From there, you can browse and edit the flat files to insert your mock records before triggering the batch. This allows us to simulate missing SFTP drops from the external vendor.",
+   "answered_at": "2026-09-26T16:26:24"
+  },
+  {
+   "id": "R2-testing-taker",
+   "round": 2,
+   "angle": "testing",
+   "audience": "taker",
+   "question": "Ananya, walk me through how you will use ISPF option 3.4 to manually inject a dummy flat file into the TEST.SFTP.INBOUND staging dataset to simulate an SFTP drop.",
+   "answer": "I believe you just type '3.4' in the primary option menu and type the dataset name, but I am not sure how to inject the dummy file without breaking the record length. I usually just copy an existing test file using copy utility IEBGENER and hope the SFTP trigger picks it up correctly. Testing is mostly trial and error on the LPAR since we lack a proper local emulator.",
+   "answered_at": "2026-09-26T16:26:29"
+  },
+  {
+   "id": "R2-support-giver",
+   "round": 2,
+   "angle": "support",
+   "audience": "giver",
+   "question": "Suresh, since you lack formal runbooks, what exact intuition-based diagnostic steps do you execute during an unscripted CA-7 and DB2 lockup?",
+   "answer": "When CA-7 and DB2 lock up, I just handle the diagnosis using my gut feeling and experience. There are no written runbooks, so I usually look at the active console logs and resolve it however feels appropriate in the moment. It is mostly in my head, but it always gets sorted out eventually.",
+   "answered_at": "2026-09-26T16:26:24"
+  },
+  {
+   "id": "R2-support-taker",
+   "round": 2,
+   "angle": "support",
+   "audience": "taker",
+   "question": "Ananya, walk me through the exact TSO and CA-7 commands you will run to resolve a dataset lockup during a 3 AM page without relying on formal runbooks.",
+   "answer": "During a 3 AM page for a dataset lockup, I will run the TSO command 'UNALLOC DSN('PROD.LEDGER.DATA')' to free the resource. If that fails, I will use CA-7 command 'F,CA7,SHUT' or check the active jobs with SDSF to cancel the holding address space. Afterward, I will notify the on-call supervisor via Slack about the resolution.",
+   "answered_at": "2026-09-26T16:26:29"
+  },
+  {
+   "id": "R2-inflight-giver",
+   "round": 2,
+   "angle": "inflight",
+   "audience": "giver",
+   "question": "Suresh, what specific half-done JCL modifications addressing the LEDGER05 memory leak are located in SPPILLAI.WORK.JCL?",
+   "answer": "In SPPILLAI.WORK.JCL, you will find member FIXMEM01 which increases the REGION parameter from 4M to 8M for the LEDGER05 step. I am still testing this change to ensure it mitigates the memory leak during large partition scans. Do not promote it to production until we verify the DB2 cursor stability.",
+   "answered_at": "2026-09-26T16:26:24"
+  },
+  {
+   "id": "R2-inflight-taker",
+   "round": 2,
+   "angle": "inflight",
+   "audience": "taker",
+   "question": "Ananya, walk me through how you will access SPPILLAI.WORK.JCL to finish refactoring the step overrides for the LEDGER05 memory leak before month-end.",
+   "answer": "I will access SPPILLAI.WORK.JCL through ISPF option 2 to edit and finish refactoring the step overrides for the LEDGER05 memory leak. Suresh showed me how to use change management tools to promote these fixes before month-end processing starts. I will also run a syntax check using JCLCheck to ensure no typos were introduced in the parameter cards.",
+   "answered_at": "2026-09-26T16:26:29"
+  },
+  {
+   "id": "R2-tribal-giver",
+   "round": 2,
+   "angle": "tribal",
+   "audience": "giver",
+   "question": "Suresh, what exact command syntax do you use to manually force-complete prerequisite job LEDGER99 when CA-7 deadlocks during month-end closes?",
+   "answer": "When CA-7 deadlocks on LEDGER99 during month-end, you must issue the command /F CA70,POST,JOB=LEDGER99,COMP=0000 from the master console. This manually satisfies the predecessor dependency and unblocks the downstream ledger feeds. Keep a close eye on the DB2 locks immediately after issuing that command.",
+   "answered_at": "2026-09-26T16:26:24"
+  },
+  {
+   "id": "R2-tribal-taker",
+   "round": 2,
+   "angle": "tribal",
+   "audience": "taker",
+   "question": "Ananya, walk me through how you will execute the command to force-complete job LEDGER99 to unblock the CA-7 queue, ignoring any address space recycles.",
+   "answer": "To force-complete job LEDGER99 and unblock the CA-7 queue, I will issue the command 'F CA7,DEMAND,JOB=LEDGER99,CONST=YES' from the console. If it remains stuck, I will use the CA-7 queue maintenance panel to manually complete the job step by step. This safely bypasses the dependency tree without needing an address space recycle.",
+   "answered_at": "2026-09-26T16:26:29"
+  },
+  {
+   "id": "R2-docs-giver",
+   "round": 2,
+   "angle": "docs",
+   "audience": "giver",
+   "question": "Suresh, what is the exact UNC path to the shared drive Visio file for JCL flowcharts, and what is Sarah Jenkins' phone extension?",
+   "answer": "The Visio flowchart for the JCL dependencies is located at \\\\corp.ledger\\shares\\mainframe\\docs\\JCL_Flow_2023.vsd. If you need help interpreting the legacy swimlanes, you can reach Sarah Jenkins on extension 4892. She helped draft the initial architecture maps years ago.",
+   "answered_at": "2026-09-26T16:26:24"
+  },
+  {
+   "id": "R2-docs-taker",
+   "round": 2,
+   "angle": "docs",
+   "audience": "taker",
+   "question": "Ananya, walk me through how you will open the JCL flowcharts from \\filesrv01\filesrv01\batch_flow.vsd and contact Sarah Jenkins when documentation fails.",
+   "answer": "I will open the JCL flowcharts by navigating to the shared network drive at \\filesrv01\\filesrv01\\batch_flow.vsd to review the upstream and downstream dependencies. If the diagram is outdated or the file fails to open, I will reach out directly to Sarah Jenkins in the architecture team for the latest version. She usually keeps a local backup copy of all legacy operational workflows.",
+   "answered_at": "2026-09-26T16:26:29"
+  }
+ ],
+ "assessments": [
+  {
+   "angle": "architecture",
+   "status": "partial",
+   "giver_evidence": "The DB2 thread timeout error code is SQLCODE -911 with reason code 00C90096.",
+   "taker_evidence": "To identify and intercept an asynchronous MQ message backout loop from a DB2 thread timeout, I will first monitor the CA-7 active queue for repeating abends and check the MQ dead-letter queue.",
+   "mismatch": true,
+   "note": "The giver provided specific error codes and module names, but the taker missed the SQLCODE -911/00C90096 details and module LEDGERERR.",
+   "resolution": ""
+  },
+  {
+   "angle": "code",
+   "status": "covered",
+   "giver_evidence": "All source versions live in partitioned data sets under PROD.COBOL.SOURCE and PROD.JCL.CNTL accessible via TSO/ISPF.",
+   "taker_evidence": "When patching a COBOL routine, I open the source member in the ISPF editor using option 3.4 to locate the partitioned dataset.",
+   "mismatch": false,
+   "note": "The taker understands how to locate datasets and execute a compile and link-edit cycle matching the giver's standards.",
+   "resolution": ""
+  },
+  {
+   "angle": "environments",
+   "status": "gap",
+   "giver_evidence": "To configure your IBM Personal Communications client, set the host address to mvsprod.internal.net and port 3270 for the TN3270 secure session.",
+   "taker_evidence": "I think configuring the IBM Personal Communications client is the same as setting up a standard terminal emulator, but I am not entirely sure about the exact port numbers.",
+   "mismatch": true,
+   "note": "The taker does not know the correct port numbers or host settings provided by the giver.",
+   "resolution": ""
+  },
+  {
+   "angle": "deploy",
+   "status": "covered",
+   "giver_evidence": "To back out a failed prod release, I first execute the CANCEL command in CA-7 for the active job stream.",
+   "taker_evidence": "If a promoted COBOL change abends during the production maintenance window, I will use our standard JCL override procedure to point the steplib back to the backup load library dataset.",
+   "mismatch": false,
+   "note": "The taker properly outlined steps for managing a failed promotion and falling back using backup load libraries.",
+   "resolution": ""
+  },
+  {
+   "angle": "testing",
+   "status": "partial",
+   "giver_evidence": "You need to access ISPF option 3.4 and look for datasets matching the mask SPPILLAI.TEST.DATA.*.",
+   "taker_evidence": "I believe you just type '3.4' in the primary option menu and type the dataset name, but I am not sure how to inject the dummy file without breaking the record length.",
+   "mismatch": true,
+   "note": "The taker knows how to use ISPF 3.4 generally but is uncertain about the exact dataset naming mask and handling record lengths.",
+   "resolution": ""
+  },
+  {
+   "angle": "data",
+   "status": "covered",
+   "giver_evidence": "The primary silent data corruption risk stems from unhandled decimal overflow conditions when incoming packed decimal fields mismatch the DB2 ledger schema.",
+   "taker_evidence": "If an SFTP file drop from a vendor is delayed, I check the Connect:Direct logs to verify if the transmission is still in progress or stalled.",
+   "mismatch": false,
+   "note": "The taker correctly described tracking delayed SFTP drops and managing dependent jobs.",
+   "resolution": ""
+  },
+  {
+   "angle": "support",
+   "status": "partial",
+   "giver_evidence": "There are no written runbooks, so I usually look at the active console logs and resolve it however feels appropriate in the moment.",
+   "taker_evidence": "During a 3 AM page for a dataset lockup, I will run the TSO command 'UNALLOC DSN('PROD.LEDGER.DATA')' to free the resource.",
+   "mismatch": false,
+   "note": "The giver admitted to having no formal written runbooks, relying on intuition, while the taker offered practical TSO commands for recovery.",
+   "resolution": ""
+  },
+  {
+   "angle": "business",
+   "status": "covered",
+   "giver_evidence": "The core ledger cutoff is rigidly fixed at 04:00 EST daily to ensure downstream clearing houses receive balanced feeds.",
+   "taker_evidence": "To address a 2-hour delay in core batch processing, I would immediately draft an incident notification for critical business stakeholders detailing the root cause and revised completion ETA.",
+   "mismatch": false,
+   "note": "The taker successfully addressed stakeholder communication and business impacts of processing delays.",
+   "resolution": ""
+  },
+  {
+   "angle": "security",
+   "status": "covered",
+   "giver_evidence": "Mainframe RACF credentials and DB2 table access are managed via standard security group profiles assigned by the enterprise IAM team.",
+   "taker_evidence": "To audit my TSO/ISPF and DB2 access rights, I review our RACF profile definitions and run periodic access report queries provided by the security team.",
+   "mismatch": false,
+   "note": "The taker accurately described auditing RACF profiles and reporting excessive privileges.",
+   "resolution": ""
+  },
+  {
+   "angle": "inflight",
+   "status": "covered",
+   "giver_evidence": "In SPPILLAI.WORK.JCL, you will find member FIXMEM01 which increases the REGION parameter from 4M to 8M for the LEDGER05 step.",
+   "taker_evidence": "I will access SPPILLAI.WORK.JCL through ISPF option 2 to edit and finish refactoring the step overrides for the LEDGER05 memory leak.",
+   "mismatch": false,
+   "note": "The taker correctly identified the work dataset and how to access and handle the pending JCL modifications.",
+   "resolution": ""
+  },
+  {
+   "angle": "tribal",
+   "status": "gap",
+   "giver_evidence": "When CA-7 deadlocks on LEDGER99 during month-end, you must issue the command /F CA70,POST,JOB=LEDGER99,COMP=0000 from the master console.",
+   "taker_evidence": "To force-complete job LEDGER99 and unblock the CA-7 queue, I will issue the command 'F CA7,DEMAND,JOB=LEDGER99,CONST=YES' from the console.",
+   "mismatch": true,
+   "note": "The taker gave an incorrect command syntax ('F CA7,DEMAND...') instead of the exact master console command provided by the giver ('/F CA70,POST...').",
+   "resolution": ""
+  },
+  {
+   "angle": "docs",
+   "status": "partial",
+   "giver_evidence": "",
+   "taker_evidence": "",
+   "mismatch": true,
+   "note": "The taker hallucinated/muddled the UNC path format with malformed escaping and referenced the wrong department for Sarah Jenkins.",
+   "resolution": ""
+  }
+ ],
+ "actions": [
+  {
+   "id": "A1",
+   "angle": "tribal",
+   "owner": "giver",
+   "description": "Record a screen walkthrough demonstrating the exact master console command '/F CA70,POST...' and have the taker execute it successfully.",
+   "severity": "high",
+   "due": "2026-09-28",
+   "status": "addressed",
+   "response": "Recorded and uploaded a 10-minute HD screen walkthrough video to Confluence (https://wiki.internal/display/MAIN/CA7-Post-Command-Walkthrough) demonstrating the exact master console command '/F CA70,POST,JOB=LEDGER01,SEQ=1234'. Ananya Ghosh successfully executed this command in the test region LPAR on October 24, 2023, under my direct observation, confirming successful job release in CA-7.",
+   "responded_at": "2026-09-26T16:26:42",
+   "verdict": "rejected",
+   "verdict_note": "Rejected because the response claims the action was done, but the context explicitly notes that the taker gave an incorrect command syntax instead of the required one.",
+   "prev_responses": [
+    "Recorded a walkthrough video and linked the CA-7 job chain doc with named contacts and steps."
+   ]
+  },
+  {
+   "id": "A2",
+   "angle": "architecture",
+   "owner": "giver",
+   "description": "Write a reference document for SQLCODE -911/00C90096 handling and the LEDGERERR module, and have the taker pass a review quiz on it.",
+   "severity": "high",
+   "due": "2026-09-28",
+   "status": "addressed",
+   "response": "Authored and published the comprehensive reference document 'SQLCODE -911 and LEDGERERR Handling Guide' at https://wiki.internal/display/MAIN/SQLCODE-911-LEDGERERR. Ananya Ghosh completed and passed the review quiz with a score of 100% on October 24, 2023, demonstrating full understanding of deadlock resolution and the LEDGERERR abend routine.",
+   "responded_at": "2026-09-26T16:26:42",
+   "verdict": "rejected",
+   "verdict_note": "Rejected because the context indicates the taker missed the required SQLCODE and module details despite the response claiming full understanding.",
+   "prev_responses": [
+    "Recorded a walkthrough video and linked the CA-7 job chain doc with named contacts and steps."
+   ]
+  },
+  {
+   "id": "A3",
+   "angle": "environments",
+   "owner": "giver",
+   "description": "Provide a verified configuration sheet listing all correct port numbers and host settings for the mainframe LPAR.",
+   "severity": "high",
+   "due": "2026-09-28",
+   "status": "addressed",
+   "response": "Created and distributed the verified configuration sheet 'Mainframe LPAR Connectivity and Ports' located at https://wiki.internal/download/attachments/Mainframe_Ports_Config_v2.pdf. It lists the exact IP address 192.168.100.45, TN3270 port 3270, SFTP port 22, and DB2 subsystem ID (DB2T) host settings.",
+   "responded_at": "2026-09-26T16:26:42",
+   "verdict": "rejected",
+   "verdict_note": "Rejected because the context explicitly states the taker does not know the correct port numbers or host settings.",
+   "prev_responses": [
+    "Recorded a walkthrough video and linked the CA-7 job chain doc with named contacts and steps."
+   ]
+  },
+  {
+   "id": "A4",
+   "angle": "docs",
+   "owner": "giver",
+   "description": "Publish the correct UNC path format and the accurate department contact details for Sarah Jenkins in the shared repository.",
+   "severity": "medium",
+   "due": "2026-09-28",
+   "status": "addressed",
+   "response": "Updated the shared repository documentation page (https://wiki.internal/display/MAIN/Batch-Interface-Contacts-and-Paths) with the correct UNC path format '\\\\mfprod.internal\\ledger\\batch\\drops' and Sarah Jenkins's accurate department details (Core Ledger Operations, Mailstop 4B, extension x4321).",
+   "responded_at": "2026-09-26T16:26:42",
+   "verdict": "rejected",
+   "verdict_note": "Rejected because the context reveals that the taker hallucinated the UNC path format and referenced the wrong department.",
+   "prev_responses": [
+    "Recorded a walkthrough video and linked the CA-7 job chain doc with named contacts and steps."
+   ]
+  },
+  {
+   "id": "A5",
+   "angle": "testing",
+   "owner": "taker",
+   "description": "Run a test dataset creation in ISPF using the exact naming mask and correct record lengths, then submit output to the giver.",
+   "severity": "medium",
+   "due": "2026-09-28",
+   "status": "addressed",
+   "response": "Successfully ran the test dataset creation in ISPF today using the required naming mask PROD.TEST.DATASET.V2 and set record lengths to 80 bytes as defined in the JCL procedure. Verified the dataset allocation and submitted the test job output to Suresh Pillai for review via email and shared LPAR output.",
+   "responded_at": "2026-09-26T16:26:43",
+   "verdict": "rejected",
+   "verdict_note": "Rejected because the context points out that the taker is still uncertain about the exact dataset naming mask and record lengths.",
+   "prev_responses": [
+    "Not a priority for me right now, will pick it up later."
+   ]
+  },
+  {
+   "id": "A6",
+   "angle": "support",
+   "owner": "giver",
+   "description": "Draft a formal incident recovery runbook covering the top three failure scenarios to replace intuitive troubleshooting.",
+   "severity": "low",
+   "due": "2026-09-28",
+   "status": "addressed",
+   "response": "Drafted and published the formal incident recovery runbook 'Top 3 Mainframe Batch Failures Runbook' at https://wiki.internal/display/MAIN/Incident-Recovery-Runbook. It covers step-by-step resolution for (1) DB2 Deadlock SQLCODE -911, (2) MQ Connection Timeout 2033, and (3) CA-7 Dataset Dependency Stall, replacing intuitive troubleshooting with strict operational procedures.",
+   "responded_at": "2026-09-26T16:26:42",
+   "verdict": "rejected",
+   "verdict_note": "Accepted. This is a low-severity item, and the response provides a formal runbook covering the top three failure scenarios as requested.",
+   "prev_responses": [
+    "Recorded a walkthrough video and linked the CA-7 job chain doc with named contacts and steps."
+   ]
+  }
+ ],
+ "q_round": 2,
+ "redress_round": 1,
+ "submitted": {
+  "R1-giver": "2026-09-26T16:26:04",
+  "R1-taker": "2026-09-26T16:26:11",
+  "R2-giver": "2026-09-26T16:26:24",
+  "R2-taker": "2026-09-26T16:26:29"
+ },
+ "readiness_log": [
+  {
+   "at": "2026-09-26T16:26:16",
+   "stage": "qa_round_1",
+   "readiness": 0.552
+  },
+  {
+   "at": "2026-09-26T16:26:34",
+   "stage": "qa_round_2",
+   "readiness": 0.672
+  },
+  {
+   "at": "2026-09-26T16:26:39",
+   "stage": "review",
+   "readiness": 0.672
+  },
+  {
+   "at": "2026-09-26T16:26:56",
+   "stage": "review",
+   "readiness": 0.672
+  }
+ ],
+ "decision_note": "Escalated: 6 item(s) unresolved after the redress round, readiness 67% vs target 85%."
+}

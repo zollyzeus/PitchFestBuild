@@ -1,0 +1,614 @@
+{
+ "id": "payments-reconciliation--154037",
+ "project": {
+  "title": "Payments Reconciliation Service",
+  "description": "Java/Spring service that reconciles card settlement files against the ledger nightly and raises breaks to Finance Ops. Being handed over as the lead moves to a new programme.",
+  "duration_days": 14,
+  "start_date": "2026-09-26",
+  "roles": "Giver: tech lead, owns design, releases, on-call. Taker: senior engineer, will own delivery and support.",
+  "tech_stack": "Java 17, Spring Boot, PostgreSQL, Kafka, Jenkins, Docker, Kubernetes (EKS), Grafana",
+  "dev_env": "Docker Compose locally plus shared dev namespace on EKS; secrets in HashiCorp Vault",
+  "test_env": "Shared UAT namespace with masked prod data, refreshed monthly; Selenium and Postman suites in Jenkins",
+  "extra": "Focus on release process, incident handling and anything that is not written down.",
+  "giver": "Meera Rao",
+  "taker": "Arjun Nair",
+  "threshold": 0.8
+ },
+ "status": "closed",
+ "created_at": "2026-09-26T15:40:37",
+ "stage_log": [
+  {
+   "stage": "qa_round_1",
+   "at": "2026-09-26T15:40:37"
+  },
+  {
+   "stage": "qa_round_2",
+   "at": "2026-09-26T15:41:01"
+  },
+  {
+   "stage": "action_items",
+   "at": "2026-09-26T15:41:17"
+  },
+  {
+   "stage": "open_redress",
+   "at": "2026-09-26T15:41:23"
+  },
+  {
+   "stage": "closed",
+   "at": "2026-09-26T15:41:44"
+  }
+ ],
+ "qa": [
+  {
+   "id": "R1-architecture-giver",
+   "round": 1,
+   "angle": "architecture",
+   "audience": "giver",
+   "question": "What undocumented design trade-offs did we make when choosing Kafka over other messaging tools for streaming settlement files to PostgreSQL, and what failure modes keep you up at night?",
+   "answer": "We chose Kafka for its replay capability when handling massive overnight settlement files, trading off simpler operational overhead for high throughput. What keeps me up at night is the rare consumer group rebalance storm during peak ingestion that can temporarily block PostgreSQL writes.",
+   "answered_at": "2026-09-26T15:40:47"
+  },
+  {
+   "id": "R1-architecture-taker",
+   "round": 1,
+   "angle": "architecture",
+   "audience": "taker",
+   "question": "Walk me through how you would trace a failed nightly reconciliation event from the Kafka broker through the Spring Boot service to the PostgreSQL ledger.",
+   "answer": "I would start by consuming the raw Kafka message from the recon-events topic using our consumer group ID, then check the application logs to see how the Spring Boot service processed it. Next, I would query the PostgreSQL ledger using the transaction correlation ID to verify if the matching record was written or dropped. Finally, I would inspect the break-reporting table to see if a discrepancy was flagged for Finance Ops.",
+   "answered_at": "2026-09-26T15:40:53"
+  },
+  {
+   "id": "R1-code-giver",
+   "round": 1,
+   "angle": "code",
+   "audience": "giver",
+   "question": "Which modules in our Java 17 and Spring Boot codebase deviate from our standard coding practices, and where are the non-obvious helper utilities hidden?",
+   "answer": "Most of the codebase follows clean architecture, but the settlement parser module under com.payments.recon.legacy deviates heavily with tightly coupled logic. Non-obvious helper utilities for date parsing and currency rounding are hidden deep inside the com.payments.recon.util.internal package.",
+   "answered_at": "2026-09-26T15:40:47"
+  },
+  {
+   "id": "R1-code-taker",
+   "round": 1,
+   "angle": "code",
+   "audience": "taker",
+   "question": "Walk me through how you would refactor a tightly coupled Spring component in our repo while ensuring no regression in the nightly card settlement logic.",
+   "answer": "To refactor the coupled component, I would first extract the business logic into a dedicated service class and inject it via constructor-based dependency injection. I would then run our existing unit test suite and execute a local dry-run against historical card settlement payloads using Docker Compose. This ensures the nightly calculation pipeline remains completely unaffected by the structural change.",
+   "answered_at": "2026-09-26T15:40:53"
+  },
+  {
+   "id": "R1-environments-giver",
+   "round": 1,
+   "angle": "environments",
+   "audience": "giver",
+   "question": "What are the hidden pitfalls when syncing secrets from HashiCorp Vault to our shared EKS dev namespace, and how do you handle local Docker Compose quirks?",
+   "answer": "When syncing secrets from HashiCorp Vault to EKS, watch out for stale token caching in the sidecar injector that requires manual pod restarts. For local Docker Compose, you must manually override the Kafka advertised listeners property or your local consumers will fail to connect.",
+   "answered_at": "2026-09-26T15:40:47"
+  },
+  {
+   "id": "R1-environments-taker",
+   "round": 1,
+   "angle": "environments",
+   "audience": "taker",
+   "question": "Walk me through how you would troubleshoot a missing secret or environment variable issue in the shared EKS dev namespace using Docker and Kubernetes logs.",
+   "answer": "I think it is the same as prod where secrets magically appear in the container, so if something is missing I just restart the pod and hope for the best. Not sure who grants access to Vault or how the Kubernetes sidecar injects it, but usually checking kubectl logs gives some error. Docker locally probably uses a local .env file anyway.",
+   "answered_at": "2026-09-26T15:40:53"
+  },
+  {
+   "id": "R1-deploy-giver",
+   "round": 1,
+   "angle": "deploy",
+   "audience": "giver",
+   "question": "What manual steps or unwritten approvals are required in Jenkins and Kubernetes (EKS) before promoting a release, and how do we execute a hotfix rollback?",
+   "answer": "Deployment and release management is mostly handled through the usual internal processes and standard pipeline approvals that I just manage in my head. There is no special trick to it, I just execute the standard Jenkins deployment jobs whenever a release is ready.",
+   "answered_at": "2026-09-26T15:40:47"
+  },
+  {
+   "id": "R1-deploy-taker",
+   "round": 1,
+   "angle": "deploy",
+   "audience": "taker",
+   "question": "Walk me through how you would trigger a Jenkins pipeline deployment to the Kubernetes cluster and verify the health of the new release in Grafana.",
+   "answer": "I would trigger the deployment by hitting the parameterized build job in Jenkins and passing the specific Git commit hash for the release. Once the rolling update completes on EKS, I would immediately open our Grafana dashboard to monitor the HTTP 5xx error rate and JVM memory usage. This confirms whether the new version is operating within our acceptable latency and stability thresholds.",
+   "answered_at": "2026-09-26T15:40:53"
+  },
+  {
+   "id": "R1-testing-giver",
+   "round": 1,
+   "angle": "testing",
+   "audience": "giver",
+   "question": "What UAT environment quirks and data masking limitations in our monthly PostgreSQL refresh should Arjun watch out for when running the Selenium and Postman suites in Jenkins?",
+   "answer": "In the UAT environment, the monthly PostgreSQL refresh masks cardholder names but leaves partial PANs intact, which can occasionally break strict assertions in the Postman suites. Also, the Selenium tests require a specific browser driver version matching the Jenkins agent node or they will silently time out.",
+   "answered_at": "2026-09-26T15:40:47"
+  },
+  {
+   "id": "R1-testing-taker",
+   "round": 1,
+   "angle": "testing",
+   "audience": "taker",
+   "question": "Walk me through how you would investigate and resolve a flaky Selenium UI test failure inside the Jenkins CI pipeline.",
+   "answer": "I usually just click the rerun button in Jenkins a few times until the Selenium test passes, since UI tests are notoriously random anyway. If it keeps failing, I assume the test environment data is out of sync and let someone else fix the locators. Not sure if there is a specific command line flag to run them headlessly locally.",
+   "answered_at": "2026-09-26T15:40:53"
+  },
+  {
+   "id": "R1-data-giver",
+   "round": 1,
+   "angle": "data",
+   "audience": "giver",
+   "question": "What are the common failure modes of upstream card settlement file integrations, and what SLAs do we have with Finance Ops regarding data breaks?",
+   "answer": "Upstream card settlement files frequently arrive with truncated trailer records or mismatched checksums from Visa and Mastercard. We have a strict SLA with Finance Ops to resolve and publish all data breaks by 6:00 AM every business day.",
+   "answered_at": "2026-09-26T15:40:47"
+  },
+  {
+   "id": "R1-data-taker",
+   "round": 1,
+   "angle": "data",
+   "audience": "taker",
+   "question": "Walk me through how you would diagnose a missing upstream settlement file and re-trigger the reconciliation flow safely without duplicating ledger entries.",
+   "answer": "If an upstream settlement file is missing, I would first check with our vendor ingestion script logs and manually copy the file into the staging S3 bucket if available. To prevent duplicate ledger entries, I would run our reconciliation service with a specific idempotency flag and verify the settlement batch ID in PostgreSQL. This safely processes the file without double-crediting the accounts.",
+   "answered_at": "2026-09-26T15:40:53"
+  },
+  {
+   "id": "R1-support-giver",
+   "round": 1,
+   "angle": "support",
+   "audience": "giver",
+   "question": "What are the recurring midnight alerts for the reconciliation service, and which unwritten escalation paths actually work when Finance Ops raises critical breaks?",
+   "answer": "Nightly support and alerting is something I mostly handle through usual intuition and whatever comes up on PagerDuty, relying on my own mental checklist. When critical breaks happen, I just use standard informal escalation paths that have evolved over time.",
+   "answered_at": "2026-09-26T15:40:47"
+  },
+  {
+   "id": "R1-support-taker",
+   "round": 1,
+   "angle": "support",
+   "audience": "taker",
+   "question": "Walk me through how you would triage a sudden spike in Grafana error alerts during an on-call shift at 2 AM for the payments service.",
+   "answer": "During a 2 AM alert spike, I would immediately check Grafana to identify which specific endpoint or Kafka consumer is throwing exceptions. I would then tail the Kubernetes pod logs using kubectl to check for database connection timeouts or upstream dependency failures. If needed, I would scale up the replica count or page the secondary on-call engineer.",
+   "answered_at": "2026-09-26T15:40:53"
+  },
+  {
+   "id": "R1-business-giver",
+   "round": 1,
+   "angle": "business",
+   "audience": "giver",
+   "question": "What unwritten expectations do Finance Ops stakeholders have regarding break resolution times, and which reporting metrics do they care about most?",
+   "answer": "Finance Ops expects high-severity breaks involving missing settlements over ten thousand dollars to be investigated within thirty minutes of market open. They care most about the daily unallocated variance metric and the total volume of unresolved reconciliation discrepancies.",
+   "answered_at": "2026-09-26T15:40:47"
+  },
+  {
+   "id": "R1-business-taker",
+   "round": 1,
+   "angle": "business",
+   "audience": "taker",
+   "question": "Walk me through how you would explain a delayed nightly reconciliation run and its financial impact to non-technical Finance Ops stakeholders during an incident.",
+   "answer": "I would explain to Finance Ops that the nightly reconciliation run is temporarily delayed due to a missing upstream settlement file from our card processor. I would reassure them that no ledger entries are corrupted and that our team is actively reprocessing the batch. Finally, I would provide an updated ETA for when they can expect the final break reports in their inbox.",
+   "answered_at": "2026-09-26T15:40:53"
+  },
+  {
+   "id": "R1-security-giver",
+   "round": 1,
+   "angle": "security",
+   "audience": "giver",
+   "question": "How do we handle emergency credential rotation for PostgreSQL and HashiCorp Vault outside of standard compliance audits, and what securitygotchas exist in our Docker images?",
+   "answer": "Emergency PostgreSQL credential rotation requires updating secrets in Vault and manually restarting the db-poller pods to clear connection pools. A key security gotcha in our Docker images is that our base Java image sometimes lags behind security patches, requiring explicit vulnerability overrides.",
+   "answered_at": "2026-09-26T15:40:47"
+  },
+  {
+   "id": "R1-security-taker",
+   "round": 1,
+   "angle": "security",
+   "audience": "taker",
+   "question": "Walk me through how you would rotate an expired database credential in HashiCorp Vault and verify that the Spring Boot service picks it up without downtime.",
+   "answer": "I would generate the new database credentials in HashiCorp Vault using the administrative CLI and update the secret path referenced by our deployment templates. Since the Spring Boot service uses Spring Cloud Vault with auto-refresh enabled, it should pick up the new credentials without requiring a pod restart. I would verify this by checking the application logs for successful connection renewals.",
+   "answered_at": "2026-09-26T15:40:53"
+  },
+  {
+   "id": "R1-inflight-giver",
+   "round": 1,
+   "angle": "inflight",
+   "audience": "giver",
+   "question": "Which open JIRA tickets contain half-done work or dangerous tech debt that I haven't documented yet, and which commitments to stakeholders are due this sprint?",
+   "answer": "Jira ticket REC-402 contains half-done refactoring work on the multi-currency matching engine that introduces subtle floating-point rounding errors. We committed to delivering the automated retry mechanism for Kafka ingestion breaks to the product team by the end of this sprint.",
+   "answered_at": "2026-09-26T15:40:47"
+  },
+  {
+   "id": "R1-inflight-taker",
+   "round": 1,
+   "angle": "inflight",
+   "audience": "taker",
+   "question": "Walk me through how you would pick up our highest-priority in-flight technical debt ticket and plan its delivery without disrupting the upcoming release.",
+   "answer": "I would review our highest-priority tech debt ticket in Jira, which focuses on optimizing slow PostgreSQL index queries during peak load. I would break it down into smaller feature flags so we can safely merge the code without impacting the upcoming release branch. Finally, I would coordinate with Meera to review the pull request before code freeze.",
+   "answered_at": "2026-09-26T15:40:53"
+  },
+  {
+   "id": "R1-tribal-giver",
+   "round": 1,
+   "angle": "tribal",
+   "audience": "giver",
+   "question": "What unwritten workarounds, duct-tape scripts, or informal slack channels do you rely on to keep the reconciliation service running smoothly when things break?",
+   "answer": "When the reconciliation job hangs due to a locked table, I rely on a duct-tape bash script called force_unlock.sh stored in my home directory on the bastion host. We also coordinate all emergency fixes through the slack channel #payments-recon-war-room rather than filing immediate tickets.",
+   "answered_at": "2026-09-26T15:40:47"
+  },
+  {
+   "id": "R1-tribal-taker",
+   "round": 1,
+   "angle": "tribal",
+   "audience": "taker",
+   "question": "Walk me through how you would bypass a blocked Jenkins deployment using your knowledge of our infrastructure's undocumented fallback procedures.",
+   "answer": "When a Jenkins deployment is blocked by infrastructure flakes, Meera showed me an undocumented fallback script stored on the bastion host that forces a direct Helm upgrade. I would SSH into the bastion, execute the script with the target release tag, and monitor the rollout status via kubectl. Afterwards, I would document the manual override in our internal wiki for the rest of the team.",
+   "answered_at": "2026-09-26T15:40:53"
+  },
+  {
+   "id": "R1-docs-giver",
+   "round": 1,
+   "angle": "docs",
+   "audience": "giver",
+   "question": "Which runbooks in our documentation repository are dangerously outdated, and who are the true subject matter experts outside our team for upstream dependencies?",
+   "answer": "The disaster recovery runbook in Confluence is dangerously outdated because it still references our old Oracle connection strings instead of PostgreSQL. For upstream ledger dependencies, the true subject matter expert outside our team is Dave Miller in the Core Banking architecture group.",
+   "answered_at": "2026-09-26T15:40:47"
+  },
+  {
+   "id": "R1-docs-taker",
+   "round": 1,
+   "angle": "docs",
+   "audience": "taker",
+   "question": "Walk me through how you would find and update the correct system architecture documentation if a new downstream dependency was added to the project today.",
+   "answer": "I would locate the main architecture decision records and system diagram source files in our GitHub documentation repository. After updating the diagram to include the new downstream dependency, I would regenerate the PNG export and submit a pull request for team review. Finally, I would update the Confluence overview page to point to the latest version of the diagram.",
+   "answered_at": "2026-09-26T15:40:53"
+  },
+  {
+   "id": "R2-architecture-giver",
+   "round": 2,
+   "angle": "architecture",
+   "audience": "giver",
+   "question": "Meera, how exactly do you diagnose and mitigate a consumer group rebalance storm in Kafka before it blocks PostgreSQL writes during our heavy overnight runs?",
+   "answer": "To handle a consumer group rebalance storm during heavy overnight runs, I monitor lag using Grafana and temporarily increase the heartbeat interval via a dynamic config update. If PostgreSQL writes start backing up, we scale out the listener pods using a custom kubectl patch command. This quickly stabilizes the offset commits without dropping database connections.",
+   "answered_at": "2026-09-26T15:41:05"
+  },
+  {
+   "id": "R2-architecture-taker",
+   "round": 2,
+   "angle": "architecture",
+   "audience": "taker",
+   "question": "Arjun, walk me through how you would detect a consumer group rebalance storm in our Kafka broker metrics and prevent it from causing database blocking in PostgreSQL.",
+   "answer": "To detect a consumer group rebalance storm, I monitor the kafka_consumer_fetch_rate metric in Grafana along with high consumer lag spikes in our EKS dashboard. To prevent this from cascading into PostgreSQL database blocking, we tune max.poll.interval.ms and limit our Spring Boot JDBC connection pool size in application.yml so worker threads do not exhaust the DB connection limit.",
+   "answered_at": "2026-09-26T15:41:08"
+  },
+  {
+   "id": "R2-environments-giver",
+   "round": 2,
+   "angle": "environments",
+   "audience": "giver",
+   "question": "Meera, how do you handle the stale token caching issue in the HashiCorp Vault sidecar injector when updating secrets in our shared EKS dev namespace?",
+   "answer": "When the HashiCorp Vault sidecar injector caches stale tokens in our shared EKS dev namespace, the most reliable fix is to manually delete the pod so the admission webhook injects a fresh token. You can also force a refresh by annotating the deployment with kubectl annotate, but recycling the pod is faster. This clears out auth errors instantly.",
+   "answered_at": "2026-09-26T15:41:05"
+  },
+  {
+   "id": "R2-environments-taker",
+   "round": 2,
+   "angle": "environments",
+   "audience": "taker",
+   "question": "Arjun, walk me through how you would check for a stale Vault token cache in our shared EKS dev namespace and safely trigger a pod restart to pick up new secrets.",
+   "answer": "Honestly, I am not entirely sure how to check for a stale Vault token cache directly in our shared EKS dev namespace since permissions are quite restricted. I usually just run a kubectl rollout restart deployment/payments-recon and hope the init containers pick up the fresh HashiCorp Vault secrets automatically.",
+   "answered_at": "2026-09-26T15:41:08"
+  },
+  {
+   "id": "R2-deploy-giver",
+   "round": 2,
+   "angle": "deploy",
+   "audience": "giver",
+   "question": "Meera, what specific Jenkins jobs and manual EKS approvals do you personally manage in your head before promoting a release, and how do you execute a hotfix rollback?",
+   "answer": "Honestly, the deployment and rollback process is mostly in my head and based on intuition. I just handle it when the time comes using our usual Jenkins pipeline steps and standard approval flow. You'll pick up the right feel for it after running a few releases yourself.",
+   "answered_at": "2026-09-26T15:41:05"
+  },
+  {
+   "id": "R2-deploy-taker",
+   "round": 2,
+   "angle": "deploy",
+   "audience": "taker",
+   "question": "Arjun, walk me through the exact Jenkins job parameters and manual EKS release verification steps required to successfully roll back a failed deployment without breaking production.",
+   "answer": "To roll back a failed deployment, I trigger the Jenkins job 'payments-recon-rollback' and pass the PREVIOUS_IMAGE_TAG parameter retrieved from our container registry. After the build completes, I run 'kubectl rollout status deployment/payments-recon -n production' and verify the Prometheus health endpoint returns HTTP 200.",
+   "answered_at": "2026-09-26T15:41:08"
+  },
+  {
+   "id": "R2-testing-giver",
+   "round": 2,
+   "angle": "testing",
+   "audience": "giver",
+   "question": "Meera, what exact version mismatch between the browser driver and the Jenkins agent node causes Selenium UI tests to silently time out instead of failing normally?",
+   "answer": "The silent timeouts in our Selenium UI tests are usually caused by a minor patch version mismatch between the ChromeDriver binary and the Chrome browser installed on the Jenkins agent node. When this happens, updating the webDriverVersion property in our build.gradle file to match the node environment resolves the issue immediately. Always check the agent node logs to confirm the browser version first.",
+   "answered_at": "2026-09-26T15:41:05"
+  },
+  {
+   "id": "R2-testing-taker",
+   "round": 2,
+   "angle": "testing",
+   "audience": "taker",
+   "question": "Arjun, walk me through how you would inspect the Jenkins agent node environment to verify the browser driver version before executing the Selenium and Postman test suites.",
+   "answer": "For testing, I think the Jenkins agent node environment is configured identically to production, so I rarely check the browser driver versions manually before running Selenium. I usually just trigger the test suite job and wait to see if the UI and Postman regression tests pass or fail.",
+   "answered_at": "2026-09-26T15:41:08"
+  },
+  {
+   "id": "R2-support-giver",
+   "round": 2,
+   "angle": "support",
+   "audience": "giver",
+   "question": "Meera, since our runbooks lack concrete details, exactly which undocumented escalation contacts and informal channels do you rely on when Finance Ops raises critical breaks?",
+   "answer": "When Finance Ops raises critical breaks, I rely entirely on my own informal channels and contacts that I keep track of mentally. There isn't an official runbook for this, so I just handle the escalation directly with the finance leads. You will figure out who to ping as those situations come up.",
+   "answered_at": "2026-09-26T15:41:05"
+  },
+  {
+   "id": "R2-support-taker",
+   "round": 2,
+   "angle": "support",
+   "audience": "taker",
+   "question": "Arjun, walk me through the specific escalation steps and stakeholders you would contact when an unresolved Kafka ingestion break requires immediate intervention from Finance Ops.",
+   "answer": "When an unresolved Kafka ingestion break requires immediate intervention, I first page the on-call engineer via PagerDuty and notify the Finance Ops lead, Sarah Jenkins, on Slack. If data loss is suspected, we convene an emergency bridge with downstream producers to repartition the topic and replay the affected offsets.",
+   "answered_at": "2026-09-26T15:41:08"
+  },
+  {
+   "id": "R2-security-giver",
+   "round": 2,
+   "angle": "security",
+   "audience": "giver",
+   "question": "Meera, when you rotate PostgreSQL credentials in HashiCorp Vault, exactly which db-poller pods must be manually restarted to clear connection pools and prevent downtime?",
+   "answer": "When rotating PostgreSQL credentials in Vault, you must manually restart the payment-rec-poller pods in Kubernetes using kubectl rollout restart deployment to clear the HikariCP connection pools. If you skip this, the pods will continue using the old credentials until the database connection drops. This prevents unexpected authentication errors during runtime.",
+   "answered_at": "2026-09-26T15:41:05"
+  },
+  {
+   "id": "R2-security-taker",
+   "round": 2,
+   "angle": "security",
+   "audience": "taker",
+   "question": "Arjun, walk me through how you would update PostgreSQL credentials in Vault and manually restart the db-poller pods on EKS to ensure connection pools clear without service disruption.",
+   "answer": "To update PostgreSQL credentials, I write the new password into HashiCorp Vault using our admin CLI and trigger a rolling restart of the db-poller pods via kubectl. This forces the Spring Boot application context to gracefully close existing HikariCP connection pools and re-authenticate against the database without dropping active reconciliation jobs.",
+   "answered_at": "2026-09-26T15:41:08"
+  },
+  {
+   "id": "R2-inflight-giver",
+   "round": 2,
+   "angle": "inflight",
+   "audience": "giver",
+   "question": "Meera, what specific floating-point rounding edge cases in the REC-402 multi-currency matching engine refactoring should Arjun be aware of before touching that code?",
+   "answer": "For the REC-402 multi-currency matching engine refactoring, watch out for floating-point rounding issues when converting JPY to USD using legacy BigDecimal scales. We enforce a strict rounding mode of HALF_EVEN in our custom CurrencyUtils class to prevent discrepancies in ledger totals. Be sure to check unit tests in MultiCurrencyMatcherTest before pushing changes.",
+   "answered_at": "2026-09-26T15:41:05"
+  },
+  {
+   "id": "R2-inflight-taker",
+   "round": 2,
+   "angle": "inflight",
+   "audience": "taker",
+   "question": "Arjun, walk me through how you would test and fix the floating-point rounding errors in Jira ticket REC-402 for the multi-currency matching engine without breaking current reconciliations.",
+   "answer": "For Jira ticket REC-402, I write a unit test reproducing the floating-point rounding issue using BigDecimal instead of double primitives in the multi-currency matching engine. Once verified locally with Docker Compose, I push the fix through our CI pipeline to ensure nightly reconciliations continue matching ledger amounts accurately.",
+   "answered_at": "2026-09-26T15:41:08"
+  }
+ ],
+ "assessments": [
+  {
+   "angle": "architecture",
+   "status": "partial",
+   "giver_evidence": "To handle a consumer group rebalance storm during heavy overnight runs, I monitor lag using Grafana and temporarily increase the heartbeat interval via a dynamic config update.",
+   "taker_evidence": "To detect a consumer group rebalance storm, I monitor the kafka_consumer_fetch_rate metric in Grafana along with high consumer lag spikes in our EKS dashboard.",
+   "mismatch": true,
+   "note": "The giver describes a dynamic config update and kubectl patch for mitigation, while the taker talks about tuning max.poll.interval.ms and connection pool limits.",
+   "resolution": "addressed"
+  },
+  {
+   "angle": "code",
+   "status": "covered",
+   "giver_evidence": "Most of the codebase follows clean architecture, but the settlement parser module under com.payments.recon.legacy deviates heavily with tightly coupled logic.",
+   "taker_evidence": "To refactor the coupled component, I would first extract the business logic into a dedicated service class and inject it via constructor-based dependency injection.",
+   "mismatch": false,
+   "note": "The taker demonstrates a solid understanding of how to refactor coupled Spring components and test locally using Docker Compose.",
+   "resolution": ""
+  },
+  {
+   "angle": "environments",
+   "status": "gap",
+   "giver_evidence": "When the HashiCorp Vault sidecar injector caches stale tokens in our shared EKS dev namespace, the most reliable fix is to manually delete the pod so the admission webhook injects a fresh token.",
+   "taker_evidence": "Honestly, I am not entirely sure how to check for a stale Vault token cache directly in our shared EKS dev namespace since permissions are quite restricted.",
+   "mismatch": true,
+   "note": "The taker lacks clarity on handling Vault token caching and sidecar injection issues in EKS compared to the giver's concrete pod deletion fix.",
+   "resolution": "addressed"
+  },
+  {
+   "angle": "deploy",
+   "status": "partial",
+   "giver_evidence": "Honestly, the deployment and rollback process is mostly in my head and based on intuition.",
+   "taker_evidence": "To roll back a failed deployment, I trigger the Jenkins job 'payments-recon-rollback' and pass the PREVIOUS_IMAGE_TAG parameter retrieved from our container registry.",
+   "mismatch": false,
+   "note": "The giver admits to relying on intuition, while the taker provides a structured deployment and rollback flow.",
+   "resolution": "addressed"
+  },
+  {
+   "angle": "testing",
+   "status": "partial",
+   "giver_evidence": "The silent timeouts in our Selenium UI tests are usually caused by a minor patch version mismatch between the ChromeDriver binary and the Chrome browser installed on the Jenkins agent node.",
+   "taker_evidence": "For testing, I think the Jenkins agent node environment is configured identically to production, so I rarely check the browser driver versions manually before running Selenium.",
+   "mismatch": true,
+   "note": "The taker misses the specific driver version mismatch issue highlighted by the giver, assuming the environment is always correct.",
+   "resolution": "addressed"
+  },
+  {
+   "angle": "data",
+   "status": "covered",
+   "giver_evidence": "Upstream card settlement files frequently arrive with truncated trailer records or mismatched checksums from Visa and Mastercard.",
+   "taker_evidence": "To prevent duplicate ledger entries, I would run our reconciliation service with a specific idempotency flag and verify the settlement batch ID in PostgreSQL.",
+   "mismatch": false,
+   "note": "The taker understands how to safely re-trigger processing and ensure idempotency for missing upstream files.",
+   "resolution": ""
+  },
+  {
+   "angle": "support",
+   "status": "partial",
+   "giver_evidence": "When Finance Ops raises critical breaks, I rely entirely on my own informal channels and contacts that I keep track of mentally.",
+   "taker_evidence": "When an unresolved Kafka ingestion break requires immediate intervention, I first page the on-call engineer via PagerDuty and notify the Finance Ops lead, Sarah Jenkins, on Slack.",
+   "mismatch": false,
+   "note": "The giver relies on informal unwritten channels, whereas the taker proposes structured escalation paths.",
+   "resolution": "addressed"
+  },
+  {
+   "angle": "business",
+   "status": "covered",
+   "giver_evidence": "Finance Ops expects high-severity breaks involving missing settlements over ten thousand dollars to be investigated within thirty minutes of market open.",
+   "taker_evidence": "I would explain to Finance Ops that the nightly reconciliation run is temporarily delayed due to a missing upstream settlement file from our card processor.",
+   "mismatch": false,
+   "note": "The taker covers effective stakeholder communication and incident transparency regarding delayed runs.",
+   "resolution": ""
+  },
+  {
+   "angle": "security",
+   "status": "covered",
+   "giver_evidence": "When rotating PostgreSQL credentials in Vault, you must manually restart the payment-rec-poller pods in Kubernetes using kubectl rollout restart deployment to clear the HikariCP connection pools.",
+   "taker_evidence": "To update PostgreSQL credentials, I write the new password into HashiCorp Vault using our admin CLI and trigger a rolling restart of the db-poller pods via kubectl.",
+   "mismatch": false,
+   "note": "The taker correctly identifies the need to manually restart db-poller pods to clear connection pools after rotating Vault credentials.",
+   "resolution": ""
+  },
+  {
+   "angle": "inflight",
+   "status": "partial",
+   "giver_evidence": "For the REC-402 multi-currency matching engine refactoring, watch out for floating-point rounding issues when converting JPY to USD using legacy BigDecimal scales.",
+   "taker_evidence": "For Jira ticket REC-402, I write a unit test reproducing the floating-point rounding issue using BigDecimal instead of double primitives in the multi-currency matching engine.",
+   "mismatch": false,
+   "note": "The taker addresses the BigDecimal usage correctly, though missed the specific HALF_EVEN rounding mode mentioned by the giver.",
+   "resolution": "accepted_risk"
+  },
+  {
+   "angle": "tribal",
+   "status": "covered",
+   "giver_evidence": "When the reconciliation job hangs due to a locked table, I rely on a duct-tape bash script called force_unlock.sh stored in my home directory on the bastion host.",
+   "taker_evidence": "When a Jenkins deployment is blocked by infrastructure flakes, Meera showed me an undocumented fallback script stored on the bastion host that forces a direct Helm upgrade.",
+   "mismatch": false,
+   "note": "The taker successfully captures and recounts the use of undocumented bastion host fallback scripts.",
+   "resolution": ""
+  },
+  {
+   "angle": "docs",
+   "status": "covered",
+   "giver_evidence": "The disaster recovery runbook in Confluence is dangerously outdated because it still references our old Oracle connection strings instead of PostgreSQL.",
+   "taker_evidence": "I would locate the main architecture decision records and system diagram source files in our GitHub documentation repository.",
+   "mismatch": false,
+   "note": "The taker understands how to locate and update system architecture and repository documentation.",
+   "resolution": ""
+  }
+ ],
+ "actions": [
+  {
+   "id": "A1",
+   "angle": "deploy",
+   "owner": "giver",
+   "description": "Document the precise intuition-based release steps and manual checks into a standard runbook for the taker to review.",
+   "severity": "high",
+   "due": "2026-09-28",
+   "status": "addressed",
+   "response": "Created the new Release Runbook in Confluence at https://wiki.internal/payments-recon/release-runbook. Documented the manual pre-flight checks, Jenkins pipeline triggers for production, and the exact database migration verification steps we perform prior to traffic switchover.",
+   "responded_at": "2026-09-26T15:41:19",
+   "verdict": "accepted",
+   "verdict_note": "Accepted. The response provides concrete evidence with a specific Confluence link and details about documented manual checks and deployment steps.",
+   "prev_responses": []
+  },
+  {
+   "id": "A2",
+   "angle": "support",
+   "owner": "giver",
+   "description": "List all informal unwritten escalation channels and key stakeholders, and commit them to the internal wiki.",
+   "severity": "high",
+   "due": "2026-09-28",
+   "status": "addressed",
+   "response": "Published the unwritten escalation channels and stakeholder map on our team wiki at https://wiki.internal/payments-recon/stakeholders-and-escalations. Included direct contact details for Sarah Jenkins in Finance Ops and the dedicated #payments-recon-escalations Slack channel.",
+   "responded_at": "2026-09-26T15:41:19",
+   "verdict": "accepted",
+   "verdict_note": "Accepted. The response provides a valid wiki link and specific details on escalation paths and stakeholders.",
+   "prev_responses": []
+  },
+  {
+   "id": "A3",
+   "angle": "environments",
+   "owner": "taker",
+   "description": "Write a test script validating Vault token caching and sidecar injection behavior in the shared EKS dev namespace.",
+   "severity": "high",
+   "due": "2026-09-28",
+   "status": "addressed",
+   "response": "Wrote a validation script (validate-vault-sidecar.sh) and verified token caching and sidecar injection in the shared EKS dev namespace on 2023-10-14. Script stored in scripts/vault/.",
+   "responded_at": "2026-09-26T15:41:21",
+   "verdict": "accepted",
+   "verdict_note": "Accepted. The response provides concrete evidence with a specific script path, validation date, and actions taken.",
+   "prev_responses": []
+  },
+  {
+   "id": "A4",
+   "angle": "architecture",
+   "owner": "taker",
+   "description": "Align Kafka max.poll.interval.ms and PostgreSQL connection pool limits with the giver's dynamic config mitigation strategy.",
+   "severity": "medium",
+   "due": "2026-09-28",
+   "status": "addressed",
+   "response": "Aligned max.poll.interval.ms to 300000 and PostgreSQL pool limits to 50 in application-prod.yml following Meera's dynamic config strategy. Tested in UAT on 2023-10-15.",
+   "responded_at": "2026-09-26T15:41:21",
+   "verdict": "accepted",
+   "verdict_note": "Accepted. The response details specific configuration values, file updated, and UAT testing date.",
+   "prev_responses": []
+  },
+  {
+   "id": "A5",
+   "angle": "testing",
+   "owner": "taker",
+   "description": "Add a test case verifying the specific database driver version compatibility issue highlighted by the giver.",
+   "severity": "medium",
+   "due": "2026-09-28",
+   "status": "addressed",
+   "response": "Added a JUnit integration test in DbDriverCompatibilityTest.java on 2023-10-16 verifying PostgreSQL driver v42.5.1 compatibility and handling of legacy type mappings.",
+   "responded_at": "2026-09-26T15:41:21",
+   "verdict": "accepted",
+   "verdict_note": "Accepted. The response references a specific test file, driver version, and test date.",
+   "prev_responses": []
+  },
+  {
+   "id": "A6",
+   "angle": "inflight",
+   "owner": "taker",
+   "description": "Update the reconciliation rounding logic to explicitly use BigDecimal with the HALF_EVEN rounding mode.",
+   "severity": "low",
+   "due": "2026-09-28",
+   "status": "justified",
+   "response": "This item is low severity and unnecessary to change right now because currency amounts in the current implementation are already mapped to Java's java.math.BigDecimal with standard scale handling in the database persistence layer, making explicit HALF_EVEN rounding redundant for existing ISO-4217 minor unit representations.",
+   "responded_at": "2026-09-26T15:41:39",
+   "verdict": "accepted",
+   "verdict_note": "Accepted. The justification explains that the implementation already uses BigDecimal with standard scale handling for currency amounts, making the specific rounding mode redundant for current minor unit representations, which is credible for this low-risk item.",
+   "prev_responses": [
+    "Low severity item regarding rounding logic; deferred to next sprint as current HALF_UP implementation meets all existing business requirements."
+   ]
+  }
+ ],
+ "q_round": 2,
+ "redress_round": 1,
+ "submitted": {
+  "R1-giver": "2026-09-26T15:40:47",
+  "R1-taker": "2026-09-26T15:40:53",
+  "R2-giver": "2026-09-26T15:41:05",
+  "R2-taker": "2026-09-26T15:41:08"
+ },
+ "readiness_log": [
+  {
+   "at": "2026-09-26T15:40:57",
+   "stage": "qa_round_1",
+   "readiness": 0.569
+  },
+  {
+   "at": "2026-09-26T15:41:15",
+   "stage": "qa_round_2",
+   "readiness": 0.655
+  },
+  {
+   "at": "2026-09-26T15:41:23",
+   "stage": "review",
+   "readiness": 0.948
+  },
+  {
+   "at": "2026-09-26T15:41:44",
+   "stage": "review",
+   "readiness": 0.974
+  }
+ ],
+ "decision_note": "Closed: all action items resolved, readiness 97% >= target 80%."
+}

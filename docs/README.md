@@ -7,7 +7,7 @@
 | Doc | Idea | Status | One-line pitch |
 | --- | --- | --- | --- |
 | [01-relook-plan.md](01-relook-plan.md) | **Relook** | **Build this** | Re-screens ATS-rejected candidates, surfaces qualified ones the keyword filter dropped, with cited evidence and bias flags. |
-| [02-baton-plan.md](02-baton-plan.md) | **Baton** | Built (secondary prototype, Gemini) | AI interviewer that captures a departing expert's undocumented knowledge and hands the successor a sourced handover + grounded Q&A. |
+| [02-baton-plan.md](02-baton-plan.md) | **Baton** | Built (corporate KT workflow, Gemini) | Independent giver/taker KT interviews, gap-driven action items, and a manager tracker across all open handovers. |
 
 Both docs still cover the full spec each: problem framing & assumptions, users/journey/demo script, functional & non-functional requirements, architecture (diagram + components), tech stack & dependencies, AI design (prompts/schemas/eval), technical & AI moat, competitive landscape & differentiation, and a build plan.
 
@@ -18,3 +18,5 @@ Runs on this laptop (Intel i5-8250U, 8 GB RAM, no GPU, no Node/Docker) — Pytho
 Live, editable versions (with the architecture diagrams rendered) are also on claude.ai:
 - Relook: https://claude.ai/artifact/4RW5cxQJ9qhQbL5Kt59y12
 - Baton: https://claude.ai/artifact/A5Dxf4SZjbNH6u8G4DFXBQ
+
+Combined pitch script for both prototypes in one 7-minute slot: [demo-7min.md](demo-7min.md).

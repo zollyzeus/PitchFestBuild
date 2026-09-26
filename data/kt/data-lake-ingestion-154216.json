@@ -1,0 +1,576 @@
+{
+ "id": "data-lake-ingestion-154216",
+ "project": {
+  "title": "Data Lake Ingestion",
+  "description": "Java/Spring service that reconciles card settlement files against the ledger nightly and raises breaks to Finance Ops. Being handed over as the lead moves to a new programme.",
+  "duration_days": 21,
+  "start_date": "2026-09-26",
+  "roles": "Giver: tech lead, owns design, releases, on-call. Taker: senior engineer, will own delivery and support.",
+  "tech_stack": "Java 17, Spring Boot, PostgreSQL, Kafka, Jenkins, Docker, Kubernetes (EKS), Grafana",
+  "dev_env": "Docker Compose locally plus shared dev namespace on EKS; secrets in HashiCorp Vault",
+  "test_env": "Shared UAT namespace with masked prod data, refreshed monthly; Selenium and Postman suites in Jenkins",
+  "extra": "Focus on release process, incident handling and anything that is not written down.",
+  "giver": "Rohit Das",
+  "taker": "Neha Kapoor",
+  "threshold": 0.8
+ },
+ "status": "action_items",
+ "created_at": "2026-09-26T15:42:16",
+ "stage_log": [
+  {
+   "stage": "qa_round_1",
+   "at": "2026-09-26T15:42:16"
+  },
+  {
+   "stage": "qa_round_2",
+   "at": "2026-09-26T15:42:41"
+  },
+  {
+   "stage": "action_items",
+   "at": "2026-09-26T15:42:56"
+  }
+ ],
+ "qa": [
+  {
+   "id": "R1-architecture-giver",
+   "round": 1,
+   "angle": "architecture",
+   "audience": "giver",
+   "question": "What undocumented design decisions guided our Kafka message partitioning and PostgreSQL reconciliation concurrency in this Java 17 service, and where do unexpected bottlenecks usually occur?",
+   "answer": "We partition Kafka messages by merchant ID to preserve ordering, while PostgreSQL reconciliation uses explicit row-level locking via SKIP LOCKED to allow parallel worker threads without deadlocks. Unexpected bottlenecks usually occur in the ledger matching query when partition sizes spike unexpectantly during month-end closes.",
+   "answered_at": "2026-09-26T15:42:27"
+  },
+  {
+   "id": "R1-architecture-taker",
+   "round": 1,
+   "angle": "architecture",
+   "audience": "taker",
+   "question": "Walk me through how you would scale the Spring Boot components on EKS if a sudden surge in card settlement files triples our Kafka lag during the nightly run.",
+   "answer": "To scale the Spring Boot components on EKS during a Kafka lag surge, I would adjust the horizontal pod autoscaler threshold in our Kubernetes manifests. I would increase the maximum replica count for the ingestion service deployment and ensure the Kafka consumer concurrency matches the partition count. Rohit previously set the target CPU utilization to 75 percent, which we can temporarily lower to trigger earlier scaling.",
+   "answered_at": "2026-09-26T15:42:32"
+  },
+  {
+   "id": "R1-code-giver",
+   "round": 1,
+   "angle": "code",
+   "audience": "giver",
+   "question": "Which critical modules lack test coverage or have hidden tech debt in our repository, and what unspoken coding standards do you enforce during PR reviews?",
+   "answer": "The settlement file parser module lacks sufficient unit test coverage for edge cases involving malformed CSV headers, representing our biggest hidden tech debt. During PR reviews, I strictly enforce immutability on domain models and require all database interaction methods to include explicit timeout parameters.",
+   "answered_at": "2026-09-26T15:42:27"
+  },
+  {
+   "id": "R1-code-taker",
+   "round": 1,
+   "angle": "code",
+   "audience": "taker",
+   "question": "Walk me through how you would refactor the ledger matching logic in our Java 17 codebase while maintaining our strict repository branching and PR standards.",
+   "answer": "To refactor the ledger matching logic in Java 17, I would first create a feature branch off main following our naming convention of feature slash ticket number. I would isolate the matching algorithm into a dedicated service class and add comprehensive unit tests using JUnit 5 and Mockito. Finally, I would open a pull request requiring approval from at least one senior team member before merging via Jenkins.",
+   "answered_at": "2026-09-26T15:42:32"
+  },
+  {
+   "id": "R1-environments-giver",
+   "round": 1,
+   "angle": "environments",
+   "audience": "giver",
+   "question": "What undocumented manual steps are required when HashiCorp Vault secrets expire in the shared EKS dev namespace, and what local Docker Compose gotchas should Neha watch out for?",
+   "answer": "When Vault secrets expire in the dev namespace, you have to manually trigger the token renewal script via our internal CLI tool and restart the pod injection webhook. For local Docker Compose, watch out for PostgreSQL volume permission mismatches on M-series Macs which require running a chown command post-startup.",
+   "answered_at": "2026-09-26T15:42:27"
+  },
+  {
+   "id": "R1-environments-taker",
+   "round": 1,
+   "angle": "environments",
+   "audience": "taker",
+   "question": "Walk me through how you would troubleshoot a missing secret issue in the shared EKS dev namespace using Docker Compose and HashiCorp Vault.",
+   "answer": "I think it is the same as prod, so I would probably just restart the Docker Compose containers locally and hope the Vault secrets pick up. Not sure who grants access to the shared EKS dev namespace secrets, but I would probably check the Vault UI directly. I assume the missing secret issue is just a typo in the Kubernetes secret mounting configuration rather than an actual permission failure.",
+   "answered_at": "2026-09-26T15:42:32"
+  },
+  {
+   "id": "R1-deploy-giver",
+   "round": 1,
+   "angle": "deploy",
+   "audience": "giver",
+   "question": "What undocumented manual approvals or database migrations are needed in Jenkins before promoting a release to production on EKS, and how do we handle rollbacks?",
+   "answer": "Releases to production go through our usual deployment process in Jenkins and are mostly handled by standard pipeline scripts that I just trigger when needed. I keep the exact rollback commands and approval steps mostly in my head, but you will figure them out as you go.",
+   "answered_at": "2026-09-26T15:42:27"
+  },
+  {
+   "id": "R1-deploy-taker",
+   "round": 1,
+   "angle": "deploy",
+   "audience": "taker",
+   "question": "Walk me through how you would execute a Jenkins pipeline deployment to EKS and perform an emergency rollback if the card settlement reconciliation job fails.",
+   "answer": "To deploy via Jenkins, I would trigger the main pipeline job which builds the Docker image, pushes it to EKS, and runs smoke tests. If the settlement job fails post-deployment, I would immediately execute the rollback stage in Jenkins or run kubectl rollout undo deployment data-lake-ingestion. I would then notify the team on Slack and check the Grafana dashboards for error rates.",
+   "answered_at": "2026-09-26T15:42:32"
+  },
+  {
+   "id": "R1-testing-giver",
+   "round": 1,
+   "angle": "testing",
+   "audience": "giver",
+   "question": "What known quirks exist in the monthly UAT masked data refresh that frequently break our Selenium and Postman suites in Jenkins, and which test cases are notoriously flaky?",
+   "answer": "The monthly UAT data refresh routinely breaks our Selenium suite because masked card numbers invalidate pre-recorded UI test fixtures in Jenkins. Our Postman regression suite also suffers from flaky assertions on asynchronous webhook callbacks due to network latency in the shared EKS namespace.",
+   "answered_at": "2026-09-26T15:42:27"
+  },
+  {
+   "id": "R1-testing-taker",
+   "round": 1,
+   "angle": "testing",
+   "audience": "taker",
+   "question": "Walk me through how you would debug and fix a failing Postman integration test in Jenkins caused by a mismatch in UAT masked card settlement data.",
+   "answer": "I think the Postman test runs against the exact same data as prod, so a mismatch in UAT is probably due to stale masked records. Not sure how to update the Jenkins test suite, but I would probably disable the failing Postman collection until someone fixes the monthly UAT data refresh. I assume the script failure is caused by an outdated token rather than the underlying card settlement schema.",
+   "answered_at": "2026-09-26T15:42:32"
+  },
+  {
+   "id": "R1-data-giver",
+   "round": 1,
+   "angle": "data",
+   "audience": "giver",
+   "question": "What undocumented failure modes exist with upstream card settlement file vendors, and what is our exact SLA for raising breaks to Finance Ops when Kafka feeds stall?",
+   "answer": "Upstream card settlement vendors occasionally drop trailing delimiter pipes, which causes our ingestion parser to silently truncate transaction records. Our exact SLA with Finance Ops dictates that break reports must be generated and published to their Kafka topic within 45 minutes of the nightly batch completion.",
+   "answered_at": "2026-09-26T15:42:27"
+  },
+  {
+   "id": "R1-data-taker",
+   "round": 1,
+   "angle": "data",
+   "audience": "taker",
+   "question": "Walk me through how you would investigate and remediate a delayed upstream settlement file that threatens our nightly reconciliation SLA with Finance Ops.",
+   "answer": "If an upstream settlement file is delayed, I would first check the SFTP drop zone and verify the ingestion logs in the database. I would then notify the Finance Ops stakeholder via our designated Slack channel about the potential SLA breach. Once the file arrives manually, I would trigger the reconciliation job via our Spring Boot actuator endpoint.",
+   "answered_at": "2026-09-26T15:42:32"
+  },
+  {
+   "id": "R1-support-giver",
+   "round": 1,
+   "angle": "support",
+   "audience": "giver",
+   "question": "What recurring Grafana alerts generate false positives during the nightly run, and who are the unlisted subject matter experts we must escalate to when core infrastructure fails?",
+   "answer": "Our Grafana alerts generate false positives all the time during the nightly run, and when core infrastructure fails I just handle it using the usual support process. Escalations go to the standard unlisted SMEs that I usually contact when things break.",
+   "answered_at": "2026-09-26T15:42:27"
+  },
+  {
+   "id": "R1-support-taker",
+   "round": 1,
+   "angle": "support",
+   "audience": "taker",
+   "question": "Walk me through how you would diagnose a critical Grafana memory spike alert on the Java 17 pod during peak reconciliation and execute the runbook.",
+   "answer": "When facing a Grafana memory spike alert during reconciliation, I would immediately inspect the JVM heap metrics and thread dumps using kubectl exec into the pod. If an OutOfMemoryError is imminent, I would trigger a graceful pod restart while capturing a heap dump for later analysis. Finally, I would update the runbook in Confluence with the peak memory threshold findings.",
+   "answered_at": "2026-09-26T15:42:32"
+  },
+  {
+   "id": "R1-business-giver",
+   "round": 1,
+   "angle": "business",
+   "audience": "giver",
+   "question": "Which Finance Ops stakeholders are most sensitive to reconciliation discrepancies, and what unwritten expectations do they have regarding break resolution times?",
+   "answer": "Sarah Jenkins from the Finance Ops team is particularly sensitive to discrepancies in cross-border settlements exceeding ten thousand dollars. Their unwritten expectation is that high-value breaks require a manual ping on Slack alongside the automated ticket within fifteen minutes of detection.",
+   "answered_at": "2026-09-26T15:42:27"
+  },
+  {
+   "id": "R1-business-taker",
+   "round": 1,
+   "angle": "business",
+   "audience": "taker",
+   "question": "Walk me through how you would communicate a delayed nightly reconciliation and its financial impact to our primary stakeholders in Finance Ops.",
+   "answer": "To communicate a delayed reconciliation, I would draft an incident notification email detailing the estimated completion time and potential impact on financial reporting. I would send this to the Finance Ops lead, Sarah, and post regular updates in the bridge channel. Once resolved, I would provide a brief summary of the ledger discrepancies and confirm numbers are balanced.",
+   "answered_at": "2026-09-26T15:42:32"
+  },
+  {
+   "id": "R1-security-giver",
+   "round": 1,
+   "angle": "security",
+   "audience": "giver",
+   "question": "What compliance traps or audit requirements regarding cardholder data and HashiCorp Vault access reviews do incoming tech leads frequently overlook?",
+   "answer": "Incoming leads often overlook PCI-DSS scope boundaries regarding unmasked PAN data logging in our staging environments, which will trigger an audit flag. You also need to ensure your personal HashiCorp Vault access token is manually revoked and re-requested through our security portal every ninety days.",
+   "answered_at": "2026-09-26T15:42:27"
+  },
+  {
+   "id": "R1-security-taker",
+   "round": 1,
+   "angle": "security",
+   "audience": "taker",
+   "question": "Walk me through how you would provision a new service account credential in HashiCorp Vault while adhering to our strict audit and compliance duties.",
+   "answer": "To provision a new service account credential, I would submit a request ticket through our internal IAM portal specifying the required Vault policy path. Once approved by the security team, I would generate the token using the Vault CLI and inject it into our Kubernetes secrets manager. I would also document the token lease expiration date to ensure timely rotation in compliance with audit rules.",
+   "answered_at": "2026-09-26T15:42:32"
+  },
+  {
+   "id": "R1-inflight-giver",
+   "round": 1,
+   "angle": "inflight",
+   "audience": "giver",
+   "question": "What half-done refactoring tasks or known bugs are currently lingering in Jira that Neha needs to prioritize during her first week of ownership?",
+   "answer": "Jira currently contains a half-done refactoring ticket for migrating our legacy FTP file downloader to an AWS S3 event-driven architecture. Neha should prioritize finishing that refactor during her first week to avoid blocking the upcoming vendor migration project.",
+   "answered_at": "2026-09-26T15:42:27"
+  },
+  {
+   "id": "R1-inflight-taker",
+   "round": 1,
+   "angle": "inflight",
+   "audience": "taker",
+   "question": "Walk me through how you would triage our current backlog of open tickets and prioritize the known PostgreSQL performance bugs for the next sprint.",
+   "answer": "To triage the backlog, I would review open Jira tickets with Rohit, focusing specifically on PostgreSQL performance bugs affecting nightly query times. I would prioritize items causing deadlocks or high CPU usage on the database into the upcoming sprint. Then, I would assign story points and ensure clear acceptance criteria are defined for the team.",
+   "answered_at": "2026-09-26T15:42:32"
+  },
+  {
+   "id": "R1-tribal-giver",
+   "round": 1,
+   "angle": "tribal",
+   "audience": "giver",
+   "question": "What unwritten workarounds or terminal commands do you secretly rely on when Kubernetes pods enter a CrashLoopBackOff state during the nightly run?",
+   "answer": "When Kubernetes pods enter a CrashLoopBackOff state during the nightly run, I secretly rely on a quick kubectl patch command to bypass liveness probes while I grab thread dumps. My go-to workaround is piping the container logs directly through a custom awk script to filter out noise.",
+   "answered_at": "2026-09-26T15:42:27"
+  },
+  {
+   "id": "R1-tribal-taker",
+   "round": 1,
+   "angle": "tribal",
+   "audience": "taker",
+   "question": "Walk me through how you would diagnose and fix a stubborn Kubernetes CrashLoopBackOff issue on EKS without relying on official documentation.",
+   "answer": "To fix a stubborn CrashLoopBackOff, I would run kubectl describe pod and kubectl logs to inspect the container exit code and startup exceptions. If it is a database connection timeout, I would verify the PostgreSQL credentials and network policies in EKS. Once identified, I would apply a hotfix commit directly to the deployment branch and trigger a new rollout.",
+   "answered_at": "2026-09-26T15:42:32"
+  },
+  {
+   "id": "R1-docs-giver",
+   "round": 1,
+   "angle": "docs",
+   "audience": "giver",
+   "question": "Which architecture and runbook documents in our wiki are dangerously out of date, and who is the actual go-to person when Confluence lacks the answer?",
+   "answer": "The Confluence wiki pages detailing our Kafka disaster recovery runbook and PostgreSQL failover steps are dangerously out of date and miss critical configuration flags. When documentation fails, Dave from the core platform team is the actual go-to person who knows how everything is really wired.",
+   "answered_at": "2026-09-26T15:42:27"
+  },
+  {
+   "id": "R1-docs-taker",
+   "round": 1,
+   "angle": "docs",
+   "audience": "taker",
+   "question": "Walk me through how you would update our incident runbooks in Confluence after discovering a gap during a mock outage scenario.",
+   "answer": "After discovering a gap during our mock outage scenario, I would navigate to our team Confluence space and edit the incident response runbook. I would add the newly identified troubleshooting steps for Kafka consumer lag and tag the team for review. Finally, I would share the updated documentation link in our engineering channel to keep everyone aligned.",
+   "answered_at": "2026-09-26T15:42:32"
+  },
+  {
+   "id": "R2-environments-giver",
+   "round": 2,
+   "angle": "environments",
+   "audience": "giver",
+   "question": "Rohit, exactly how should Neha execute the manual CLI token renewal script and restart the EKS webhook injection process when Vault secrets expire?",
+   "answer": "Neha, you need to run the renew-tokens.sh script located in the scripts directory using your personal AWS SSO profile, and then trigger a rolling restart of the webhook deployment with kubectl rollout restart deployment/vault-webhook -n ingress-controllers. This forces the pods to pick up the newly generated JWT tokens without any downtime. Make sure you check the pod logs immediately afterwards to confirm successful re-authentication.",
+   "answered_at": "2026-09-26T15:42:45"
+  },
+  {
+   "id": "R2-environments-taker",
+   "round": 2,
+   "angle": "environments",
+   "audience": "taker",
+   "question": "Neha, walk me through how you would use the internal CLI to renew expired Vault secrets and restart the EKS webhook injection in the dev namespace.",
+   "answer": "To renew expired Vault secrets in the dev namespace, I run the internal CLI command vault token-renew along with our team profile flag. Then, to restart the EKS webhook injection and pick up the new secrets, I execute kubectl rollout restart deployment/vault-injector -n data-lake-dev. Rohit mentioned this forces the pods to re-authenticate and pull the latest credentials seamlessly.",
+   "answered_at": "2026-09-26T15:42:48"
+  },
+  {
+   "id": "R2-deploy-giver",
+   "round": 2,
+   "angle": "deploy",
+   "audience": "giver",
+   "question": "Rohit, what specific command-line steps or pipeline variables are required to manually execute an emergency rollback in Jenkins when an EKS deployment fails?",
+   "answer": "For emergency rollbacks, it is usually just a matter of using whatever pipeline buttons or CLI commands are standard in our Jenkins setup. I tend to handle those ad-hoc when things break, so I do not have a rigid sequence written down. You will figure out the exact parameters once you look at the job history.",
+   "answered_at": "2026-09-26T15:42:45"
+  },
+  {
+   "id": "R2-deploy-taker",
+   "round": 2,
+   "angle": "deploy",
+   "audience": "taker",
+   "question": "Neha, walk me through the exact Jenkins pipeline stages and kubectl commands you would run to execute an emergency rollback of a failed EKS deployment.",
+   "answer": "For an emergency rollback, I first trigger the rollback stage in our Jenkins pipeline which automatically targets the previous stable build artifact. If I need to do it manually, I run kubectl rollout undo deployment/settlement-service -n production followed by a verification check on the pod status. Rohit set up these pipelines so that Jenkins handles the traffic routing switch automatically during the rollback.",
+   "answered_at": "2026-09-26T15:42:48"
+  },
+  {
+   "id": "R2-testing-giver",
+   "round": 2,
+   "angle": "testing",
+   "audience": "giver",
+   "question": "Rohit, how can Neha specifically update the pre-recorded Selenium UI test fixtures to handle the masked card numbers after a monthly UAT refresh?",
+   "answer": "To update the Selenium UI test fixtures after a monthly UAT refresh, you need to edit the test-data.json file in the ui-automation repository and run the updateMaskedCards() helper method. This utility script automatically normalizes the masked card numbers against the latest database seed state. Once that is done, push the changes and trigger the regression suite in Jenkins.",
+   "answered_at": "2026-09-26T15:42:45"
+  },
+  {
+   "id": "R2-testing-taker",
+   "round": 2,
+   "angle": "testing",
+   "audience": "taker",
+   "question": "Neha, walk me through how you would update the Selenium UI test fixtures and Postman webhook assertions to handle masked card numbers after a UAT data refresh.",
+   "answer": "I think we just update the test fixtures by running the standard mvn test command, and it somehow auto-corrects the masked card numbers in UAT. For Postman webhook assertions, I am not entirely sure where the JSON schema files are located, so I might just delete the old assertions and rewrite them from scratch. I will definitely need to check with Rohit on the exact regex patterns required for the masked data.",
+   "answered_at": "2026-09-26T15:42:48"
+  },
+  {
+   "id": "R2-inflight-giver",
+   "round": 2,
+   "angle": "inflight",
+   "audience": "giver",
+   "question": "Rohit, what technical blockers or missing dependencies in the half-done AWS S3 event-driven architecture refactor should Neha address first in Jira?",
+   "answer": "The main blocker in the S3 event-driven refactor is the missing IAM policy for the Lambda trigger in the Terraform modules, which prevents proper bucket notification delivery. Neha should prioritize creating a ticket for that IAM permissions fix in Jira before attempting to merge the consumer branch. Without it, the Kafka sink will fail to pick up the raw settlement files automatically.",
+   "answered_at": "2026-09-26T15:42:45"
+  },
+  {
+   "id": "R2-inflight-taker",
+   "round": 2,
+   "angle": "inflight",
+   "audience": "taker",
+   "question": "Neha, walk me through how you would take over the half-done AWS S3 event-driven refactoring ticket in Jira and implement the missing file downloader logic.",
+   "answer": "I will pick up ticket DL-402 in Jira, which covers the AWS S3 event-driven refactoring, and focus on the S3Client file downloader logic in Java. I plan to use the Spring Cloud AWS messaging dependency to listen to the SQS queue triggered by S3 bucket notifications. Once the message is received, the service will invoke our existing ledger reconciliation parser to process the newly arrived settlement file.",
+   "answered_at": "2026-09-26T15:42:48"
+  },
+  {
+   "id": "R2-tribal-giver",
+   "round": 2,
+   "angle": "tribal",
+   "audience": "giver",
+   "question": "Rohit, what is the exact syntax of the kubectl patch command you use to bypass liveness probes, and what awk script do you pipe container logs through?",
+   "answer": "To bypass the liveness probes during deep debugging sessions, I use kubectl patch deployment settlement-service -p '{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"app\",\"livenessProbe\":null}]}}}}'. For log analysis, I pipe the streaming container logs through awk '/ERROR|WARN/ {print $1, $2, $NF}' to quickly isolate exception categories. This trick has saved me countless hours during late-night incident calls.",
+   "answered_at": "2026-09-26T15:42:45"
+  },
+  {
+   "id": "R2-tribal-taker",
+   "round": 2,
+   "angle": "tribal",
+   "audience": "taker",
+   "question": "Neha, walk me through how you would apply the specific kubectl patch command to bypass liveness probes and use an awk filter on logs during a CrashLoopBackOff.",
+   "answer": "During a CrashLoopBackOff, I apply a kubectl patch command to temporarily disable the liveness probe by setting the failureThreshold to a very high number. To inspect the failure, I stream the logs using kubectl logs -n data-lake-prod --tail=200 and pipe them into an awk filter like awk '/ERROR/ {print $0}' to isolate the root cause. This trick was shared by Rohit as a quick way to keep the pod alive long enough to debug.",
+   "answered_at": "2026-09-26T15:42:48"
+  },
+  {
+   "id": "R2-docs-giver",
+   "round": 2,
+   "angle": "docs",
+   "audience": "giver",
+   "question": "Rohit, which specific configuration flags are missing from the out-of-date Kafka disaster recovery Confluence runbook that Neha needs to add?",
+   "answer": "The Kafka disaster recovery Confluence page is missing the specific consumer offset reset flags required when failing over to the secondary region. Neha should add the details about using the kafka-consumer-groups.sh tool with the --reset-offsets --shift-by -100 parameters. Updating this will ensure the team does not miss any messages during a regional outage.",
+   "answered_at": "2026-09-26T15:42:45"
+  },
+  {
+   "id": "R2-docs-taker",
+   "round": 2,
+   "angle": "docs",
+   "audience": "taker",
+   "question": "Neha, walk me through how you would update the out-of-date Kafka disaster recovery Confluence page with the correct configuration flags provided by Dave.",
+   "answer": "I will navigate to the Confluence space for the Data Lake project and edit the Kafka disaster recovery page using the updated flags Dave sent over email. Specifically, I need to update the auto.offset.reset property and the consumer group rebalance timeout values to match our new broker cluster configuration. I will also ping Dave on Slack once it is updated to make sure the operational runbook matches his expectations.",
+   "answered_at": "2026-09-26T15:42:48"
+  }
+ ],
+ "assessments": [
+  {
+   "angle": "architecture",
+   "status": "covered",
+   "giver_evidence": "We partition Kafka messages by merchant ID to preserve ordering, while PostgreSQL reconciliation uses explicit row-level locking via SKIP LOCKED to allow parallel worker threads without deadlocks.",
+   "taker_evidence": "I would adjust the horizontal pod autoscaler threshold in our Kubernetes manifests. I would increase the maximum replica count for the ingestion service deployment and ensure the Kafka consumer concurrency matches the partition count.",
+   "mismatch": false,
+   "note": "The taker understands how scaling works on EKS in response to the Kafka lag, matching the system architecture.",
+   "resolution": ""
+  },
+  {
+   "angle": "code",
+   "status": "covered",
+   "giver_evidence": "The settlement file parser module lacks sufficient unit test coverage for edge cases involving malformed CSV headers",
+   "taker_evidence": "I would isolate the matching algorithm into a dedicated service class and add comprehensive unit tests using JUnit 5 and Mockito.",
+   "mismatch": false,
+   "note": "The taker addresses code standards and refactoring cleanly.",
+   "resolution": ""
+  },
+  {
+   "angle": "environments",
+   "status": "partial",
+   "giver_evidence": "Neha, you need to run the renew-tokens.sh script located in the scripts directory using your personal AWS SSO profile, and then trigger a rolling restart of the webhook deployment with kubectl rollout restart deployment/vault-webhook -n ingress-controllers.",
+   "taker_evidence": "To renew expired Vault secrets in the dev namespace, I run the internal CLI command vault token-renew along with our team profile flag.",
+   "mismatch": true,
+   "note": "The taker gives a generic vault command instead of using the specific script and namespace details provided by the giver.",
+   "resolution": ""
+  },
+  {
+   "angle": "deploy",
+   "status": "partial",
+   "giver_evidence": "",
+   "taker_evidence": "kubectl rollout undo deployment/settlement-service -n production followed by a verification check on the pod status.",
+   "mismatch": false,
+   "note": "The taker correctly recites the exact rollback command and pipeline steps. (No verifiable quote from both sides.)",
+   "resolution": ""
+  },
+  {
+   "angle": "testing",
+   "status": "gap",
+   "giver_evidence": "edit the test-data.json file in the ui-automation repository and run the updateMaskedCards() helper method.",
+   "taker_evidence": "I think we just update the test fixtures by running the standard mvn test command, and it somehow auto-corrects the masked card numbers in UAT.",
+   "mismatch": true,
+   "note": "The taker hallucinates how maven commands fix the UI fixtures, completely missing the giver's explicit instructions.",
+   "resolution": ""
+  },
+  {
+   "angle": "data",
+   "status": "covered",
+   "giver_evidence": "Our exact SLA with Finance Ops dictates that break reports must be generated and published to their Kafka topic within 45 minutes of the nightly batch completion.",
+   "taker_evidence": "If an upstream settlement file is delayed, I would first check the SFTP drop zone and verify the ingestion logs in the database.",
+   "mismatch": false,
+   "note": "The taker covers investigating delayed files properly.",
+   "resolution": ""
+  },
+  {
+   "angle": "support",
+   "status": "partial",
+   "giver_evidence": "Our Grafana alerts generate false positives all the time during the nightly run",
+   "taker_evidence": "When facing a Grafana memory spike alert during reconciliation, I would immediately inspect the JVM heap metrics and thread dumps using kubectl exec into the pod.",
+   "mismatch": false,
+   "note": "The taker addresses memory spike runbooks well, though the giver's prompt focused heavily on false positives.",
+   "resolution": ""
+  },
+  {
+   "angle": "business",
+   "status": "covered",
+   "giver_evidence": "Sarah Jenkins from the Finance Ops team is particularly sensitive to discrepancies in cross-border settlements exceeding ten thousand dollars.",
+   "taker_evidence": "I would draft an incident notification email detailing the estimated completion time and potential impact on financial reporting. I would send this to the Finance Ops lead, Sarah...",
+   "mismatch": false,
+   "note": "The taker accurately references Sarah and appropriate stakeholder communication.",
+   "resolution": ""
+  },
+  {
+   "angle": "security",
+   "status": "covered",
+   "giver_evidence": "Incoming leads often overlook PCI-DSS scope boundaries regarding unmasked PAN data logging in our staging environments",
+   "taker_evidence": "I would submit a request ticket through our internal IAM portal specifying the required Vault policy path. Once approved by the security team, I would generate the token...",
+   "mismatch": false,
+   "note": "The taker correctly details provisioning credentials adhering to audit and compliance steps.",
+   "resolution": ""
+  },
+  {
+   "angle": "inflight",
+   "status": "covered",
+   "giver_evidence": "The main blocker in the S3 event-driven refactor is the missing IAM policy for the Lambda trigger in the Terraform modules",
+   "taker_evidence": "I will pick up ticket DL-402 in Jira, which covers the AWS S3 event-driven refactoring, and focus on the S3Client file downloader logic in Java.",
+   "mismatch": false,
+   "note": "The taker accurately identifies the ticket and the S3 refactoring scope.",
+   "resolution": ""
+  },
+  {
+   "angle": "tribal",
+   "status": "partial",
+   "giver_evidence": "kubectl patch deployment settlement-service -p '{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"app\",\"livenessProbe\":null}]}}}}'",
+   "taker_evidence": "During a CrashLoopBackOff, I apply a kubectl patch command to temporarily disable the liveness probe by setting the failureThreshold to a very high number.",
+   "mismatch": true,
+   "note": "The taker alters the mechanism from nullifying the liveness probe to changing a failureThreshold, missing the exact command provided.",
+   "resolution": ""
+  },
+  {
+   "angle": "docs",
+   "status": "partial",
+   "giver_evidence": "using the kafka-consumer-groups.sh tool with the --reset-offsets --shift-by -100 parameters.",
+   "taker_evidence": "Specifically, I need to update the auto.offset.reset property and the consumer group rebalance timeout values",
+   "mismatch": true,
+   "note": "The taker mentions general property updates instead of the explicit kafka-consumer-groups script flags provided by the giver.",
+   "resolution": ""
+  }
+ ],
+ "actions": [
+  {
+   "id": "A1",
+   "angle": "testing",
+   "owner": "taker",
+   "description": "Run the correct maven and UI fixture commands, report the output to the giver, and update the local test runbook accordingly.",
+   "severity": "high",
+   "due": "2026-09-28",
+   "status": "open",
+   "response": "",
+   "responded_at": "",
+   "verdict": "",
+   "verdict_note": "",
+   "prev_responses": []
+  },
+  {
+   "id": "A2",
+   "angle": "tribal",
+   "owner": "giver",
+   "description": "Record a 5-minute screencast demonstrating the exact nullify liveness probe command and share it with the taker.",
+   "severity": "high",
+   "due": "2026-09-28",
+   "status": "open",
+   "response": "",
+   "responded_at": "",
+   "verdict": "",
+   "verdict_note": "",
+   "prev_responses": []
+  },
+  {
+   "id": "A3",
+   "angle": "environments",
+   "owner": "taker",
+   "description": "Execute the specific vault script against the correct dev namespace and write down the exact output for verification.",
+   "severity": "medium",
+   "due": "2026-09-28",
+   "status": "open",
+   "response": "",
+   "responded_at": "",
+   "verdict": "",
+   "verdict_note": "",
+   "prev_responses": []
+  },
+  {
+   "id": "A4",
+   "angle": "docs",
+   "owner": "giver",
+   "description": "Document the exact kafka-consumer-groups script flags and share the runbook page with the taker.",
+   "severity": "medium",
+   "due": "2026-09-28",
+   "status": "open",
+   "response": "",
+   "responded_at": "",
+   "verdict": "",
+   "verdict_note": "",
+   "prev_responses": []
+  },
+  {
+   "id": "A5",
+   "angle": "support",
+   "owner": "taker",
+   "description": "Shadow the giver during a shift focused on resolving false positive break alerts and write a summary of the triage steps.",
+   "severity": "medium",
+   "due": "2026-09-28",
+   "status": "open",
+   "response": "",
+   "responded_at": "",
+   "verdict": "",
+   "verdict_note": "",
+   "prev_responses": []
+  },
+  {
+   "id": "A6",
+   "angle": "deploy",
+   "owner": "taker",
+   "description": "Perform a dry-run deployment and rollback in the shared UAT namespace and submit the Jenkins logs to the giver.",
+   "severity": "low",
+   "due": "2026-09-28",
+   "status": "open",
+   "response": "",
+   "responded_at": "",
+   "verdict": "",
+   "verdict_note": "",
+   "prev_responses": []
+  }
+ ],
+ "q_round": 2,
+ "redress_round": 0,
+ "submitted": {
+  "R1-giver": "2026-09-26T15:42:27",
+  "R1-taker": "2026-09-26T15:42:32",
+  "R2-giver": "2026-09-26T15:42:45",
+  "R2-taker": "2026-09-26T15:42:48"
+ },
+ "readiness_log": [
+  {
+   "at": "2026-09-26T15:42:37",
+   "stage": "qa_round_1",
+   "readiness": 0.672
+  },
+  {
+   "at": "2026-09-26T15:42:53",
+   "stage": "qa_round_2",
+   "readiness": 0.724
+  }
+ ],
+ "decision_note": ""
+}

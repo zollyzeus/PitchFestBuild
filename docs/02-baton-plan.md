@@ -2,7 +2,21 @@
 
 Sep 26, 2026 · @Anand
 
-**Status: parked for this event.** One person is building the PitchFest prototype and is committing fully to [Second Look](https://claude.ai/artifact/4RW5cxQJ9qhQbL5Kt59y12) instead — a solo builder can't take two ideas to a demoable state in one day. This doc stays as the fully-scoped next problem to prototype, and gets a one-line mention in Second Look's "what we'd build next."
+**Status: rebuilt as a corporate knowledge-transfer (KT) workflow, on Gemini.** The page `pages/2_Baton.py` (code in `baton/kt_*.py`) supersedes the departing-expert design described below; the earlier document-interview prototype is kept at `pages/3_Baton_Doc_Interview.py`. The sections below are the earlier design and are not updated.
+
+**KT workflow (as built)**
+1. **Brief (project manager):** project description, duration, roles and responsibilities, tech stack, dev and test environment, extra prompts, KT giver and taker, target readiness (default 80%).
+2. **Independent Q&A:** Gemini writes one giver question and one taker question for each of 12 KT angles (architecture, code, environments, CI/CD, testing, data, incidents, business context, security, in-flight work, tribal knowledge, documentation). Giver and taker answer in separate views and never see each other's answers. If round 1 leaves weak angles, round 2 asks sharper follow-ups on those only.
+3. **Assessment:** each angle is covered, partial or gap by comparing both sides, with a mismatch flag. Evidence quotes are checked in code; no verifiable quote from both sides means no "covered". Readiness is a weighted share of the 12 angles.
+4. **Action items:** gaps become actions for the giver or the taker with severity and due date. Each owner responds with proof ("addressed") or a justification to ignore.
+5. **Review and decision:** Gemini reviews responses; code applies the rule. Close if every action is accepted and readiness meets the target. Otherwise keep open for one redress round (rejected items return to their owner with the reviewer's note). Still unresolved: escalate to the manager. The manager can override with a note.
+6. **Tracker:** per KT stage, day n of N, deadline, days left, overdue, who it is waiting on, open actions, readiness, time in stage; plus an action list across all KTs.
+
+**Measured (one run, simulated giver and taker with 4 planted weak angles, synthetic project):** 4/4 planted weaknesses flagged in the first assessment; 0 of 8 other angles flagged as hard gaps; readiness 57% then 66% (after round 2), 95% and 97% (after action-item reviews); 6/6 actions accepted; closed after one redress round; 69 seconds end to end. The personas are cooperative by construction, so this shows the loop works, not how real people behave.
+
+**5 KTs seeded in `data/kt/` for the demo,** covering every real branch of the decision rule: Q&A round 1 in progress (Claims Portal Frontend), mid action-items (Data Lake Ingestion), closed on the first pass (Fraud Alerts Notification Service), closed after one redress round (Payments Reconciliation Service), and escalated after a redress round when the taker kept justifying gaps away instead of closing them (Legacy Mainframe Batch Interface). See [demo-7min.md](demo-7min.md) for the pitch script built around these.
+
+**Run:** `.venv/bin/streamlit run Relook.py`, open Baton. Eval: `.venv/bin/python -m baton.kt_eval`. Slides: `slide_src/generate_baton_slide.py`.
 
 ## Problem framing and assumptions
 
